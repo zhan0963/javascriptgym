@@ -1,8 +1,6 @@
-# Gym
+# Two Sum
 
-## Two Sum
-
-### problem
+## problem
 
 Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.  
   
@@ -41,9 +39,9 @@ Only one valid answer exists.
 
 Problem link on Leetcode: [Two Sum](https://leetcode.com/problems/two-sum/)
 
-### solutions
+## solutions
 
-#### solution 1
+### solution 1
 ```
 /**
  * @param {number[]} nums
@@ -66,7 +64,7 @@ var twoSum = function(nums, target) {
 result and complexity:
 ![TWOSUM1](./img/twosum1.png)
 
-#### solution 2
+### solution 2
 ```
 /**
  * @param {number[]} nums
