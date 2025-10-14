@@ -64,7 +64,7 @@ var twoSum = function(nums, target) {
 ```
 
 result and complexity:
-![TWOSUM1](./img/towsum1.png)
+![TWOSUM1](./img/twosum1.png)
 
 #### solution 2
 ```
@@ -95,4 +95,4 @@ var twoSum = function(nums, target) {
 ```
   
 result and complexity:
-![TWOSUM2](./img/towsum2.png)
+![TWOSUM2](./img/twosum2.png)
