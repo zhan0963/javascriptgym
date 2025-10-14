@@ -1,5 +1,6 @@
 # Javascript Gym
 
 ## problems
-[Tow Sum](./twosum.md)
-[Remove Duplicates from Sorted Array](./RemoveDuplicatesfromSortedArray.md)
+- [X] [Tow Sum](./twosum.md)
+- [X] [Remove Duplicates from Sorted Array](./RemoveDuplicatesfromSortedArray.md)
+- [ ] [Longest Common Prefix](./LongestCommonPrefix.md)
