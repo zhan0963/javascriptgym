@@ -51,6 +51,7 @@ Constraints:
 0 <= nums[i] <= 50
 0 <= val <= 100
 ```
+Leetcode link: https://leetcode.com/problems/remove-element/  
 
 ## Solutions
 
