@@ -44,7 +44,7 @@ var longestCommonPrefix = function(strs) {
         if (prefix.length > strs[i].length) {
             prefix = strs[0].slice(0, strs[i].length);
         }
-        console.log(prefix);
+        //console.log(prefix);
         for (let j = 0; j < prefix.length; j++) {
             if (prefix[j] !== strs[i][j]) {
                 if (j == 0) return "";
