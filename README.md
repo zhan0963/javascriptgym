@@ -6,4 +6,4 @@
 - [X] [Longest Common Prefix](./LongestCommonPrefix.md)
 - [X] [Remove Element](./RemoveElement.md)
 - [X] [Search Insert Position](./SearchInsertPosition.md)
-- [ ] [Plus One](./PlusOne.md)
+- [X] [Plus One](./PlusOne.md)
