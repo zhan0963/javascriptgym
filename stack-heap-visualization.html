@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack & Heap: Shallow vs Deep Copy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        .memory-container {
+            display: flex;
+            gap: 40px;
+            margin-top: 30px;
+            position: relative;
+            flex-wrap: wrap;
+        }
+        .memory-area {
+            flex: 1;
+            min-width: 300px;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+        }
+        .stack {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 3px solid #2196f3;
+        }
+        .heap {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 3px solid #ff9800;
+        }
+        .memory-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .stack .memory-title {
+            background: #2196f3;
+            color: white;
+        }
+        .heap .memory-title {
+            background: #ff9800;
+            color: white;
+        }
+        .stack-item {
+            background: white;
+            border: 2px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .stack-item.highlight {
+            background: #fff176;
+            border-color: #fbc02d;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(251, 192, 45, 0.4);
+        }
+        .var-name {
+            font-weight: bold;
+            color: #1976d2;
+            font-size: 1.1em;
+        }
+        .var-value {
+            font-family: 'Courier New', monospace;
+            color: #666;
+            background: #f5f5f5;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .pointer {
+            color: #e91e63;
+            font-weight: bold;
+        }
+        .heap-object {
+            background: white;
+            border: 3px solid #ff9800;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .heap-object.highlight {
+            background: #fff176;
+            border-color: #fbc02d;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(251, 192, 45, 0.4);
+        }
+        .heap-address {
+            position: absolute;
+            top: -15px;
+            left: 10px;
+            background: #ff9800;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .heap-content {
+            margin-top: 10px;
+        }
+        .array-item, .obj-prop {
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            padding: 8px;
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+        .obj-prop {
+            background: #e1f5fe;
+            border-color: #81d4fa;
+        }
+        .array-item.changed, .obj-prop.changed {
+            background: #ffeb3b;
+            border-color: #fbc02d;
+            animation: pulse 0.5s;
+        }
+        .arrow {
+            position: absolute;
+            stroke: #e91e63;
+            stroke-width: 3;
+            fill: none;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .arrow-marker {
+            fill: #e91e63;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+        }
+        button.reset {
+            background: #ff5252;
+        }
+        button.reset:hover {
+            background: #d32f2f;
+        }
+        .description {
+            background: #f5f5f5;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .description strong {
+            color: #667eea;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        @keyframes drawArrow {
+            from { stroke-dashoffset: 1000; }
+            to { stroke-dashoffset: 0; }
+        }
+        .arrow-animated {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawArrow 1s ease-out forwards;
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .legend-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Stack & Heap Memory: Copy Operations</h1>
+
+        <!-- Reference Assignment Demo -->
+        <div class="section">
+            <h2>1️⃣ Reference Assignment (=)</h2>
+            <div class="description">
+                <strong>let arr2 = arr1</strong><br>
+                Both variables point to the SAME heap address. No new object created.
+            </div>
+            <div class="controls">
+                <button onclick="demoReference()">▶️ Run Demo</button>
+                <button class="reset" onclick="resetReference()">🔄 Reset</button>
+            </div>
+            <div class="memory-container" id="refContainer">
+                <div class="memory-area stack">
+                    <div class="memory-title">📚 STACK</div>
+                    <div class="stack-item" id="ref-stack-arr1">
+                        <span class="var-name">arr1</span>
+                        <span class="var-value pointer">→ 0x001</span>
+                    </div>
+                    <div class="stack-item" id="ref-stack-arr2">
+                        <span class="var-name">arr2</span>
+                        <span class="var-value pointer">→ 0x001</span>
+                    </div>
+                </div>
+                <div class="memory-area heap">
+                    <div class="memory-title">📦 HEAP</div>
+                    <div class="heap-object" id="ref-heap-obj1">
+                        <div class="heap-address">0x001</div>
+                        <div class="heap-content">
+                            <div class="array-item" id="ref-item-0">[0]: 1</div>
+                            <div class="array-item">[1]: 2</div>
+                            <div class="array-item">[2]: 3</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shallow Copy with Primitives -->
+        <div class="section">
+            <h2>2️⃣ Shallow Copy - Primitives (slice, spread)</h2>
+            <div class="description">
+                <strong>let arr3 = arr1.slice()</strong><br>
+                New array created in heap. Primitive values are copied independently.<br>
+                <strong>⚠️ Important:</strong> Even though the array contains primitives, the entire array (including the primitive values) is stored in HEAP, not stack. Stack only holds the reference!
+            </div>
+            <div class="controls">
+                <button onclick="demoShallowPrimitive()">▶️ Run Demo</button>
+                <button class="reset" onclick="resetShallowPrimitive()">🔄 Reset</button>
+            </div>
+            <div class="memory-container" id="shallowPrimitiveContainer">
+                <div class="memory-area stack">
+                    <div class="memory-title">📚 STACK</div>
+                    <div class="stack-item" id="sp-stack-arr1">
+                        <span class="var-name">arr1</span>
+                        <span class="var-value pointer">→ 0x002</span>
+                    </div>
+                    <div class="stack-item" id="sp-stack-arr3">
+                        <span class="var-name">arr3</span>
+                        <span class="var-value pointer">→ 0x003</span>
+                    </div>
+                </div>
+                <div class="memory-area heap">
+                    <div class="memory-title">📦 HEAP</div>
+                    <div class="heap-object" id="sp-heap-obj1">
+                        <div class="heap-address">0x002</div>
+                        <div class="heap-content">
+                            <div class="array-item" id="sp-item1-0">[0]: 1</div>
+                            <div class="array-item">[1]: 2</div>
+                            <div class="array-item">[2]: 3</div>
+                        </div>
+                    </div>
+                    <div class="heap-object" id="sp-heap-obj2">
+                        <div class="heap-address">0x003</div>
+                        <div class="heap-content">
+                            <div class="array-item" id="sp-item2-0">[0]: 1</div>
+                            <div class="array-item">[1]: 2</div>
+                            <div class="array-item">[2]: 3</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shallow Copy with Objects -->
+        <div class="section">
+            <h2>3️⃣ Shallow Copy - Objects (THE TRAP!)</h2>
+            <div class="description">
+                <strong>let arrObj3 = arrObj1.slice()</strong><br>
+                New array created, but objects inside still reference SAME heap addresses. Modifying nested objects affects both!
+            </div>
+            <div class="controls">
+                <button onclick="demoShallowObject()">▶️ Run Demo</button>
+                <button class="reset" onclick="resetShallowObject()">🔄 Reset</button>
+            </div>
+            <div class="memory-container" id="shallowObjectContainer">
+                <div class="memory-area stack">
+                    <div class="memory-title">📚 STACK</div>
+                    <div class="stack-item" id="so-stack-arrObj1">
+                        <span class="var-name">arrObj1</span>
+                        <span class="var-value pointer">→ 0x100</span>
+                    </div>
+                    <div class="stack-item" id="so-stack-arrObj3">
+                        <span class="var-name">arrObj3</span>
+                        <span class="var-value pointer">→ 0x101</span>
+                    </div>
+                </div>
+                <div class="memory-area heap">
+                    <div class="memory-title">📦 HEAP</div>
+                    <div class="heap-object" id="so-heap-arr1">
+                        <div class="heap-address">0x100</div>
+                        <div class="heap-content">
+                            <div class="array-item">[0]: → 0x200</div>
+                            <div class="array-item">[1]: → 0x201</div>
+                            <div class="array-item">[2]: → 0x202</div>
+                        </div>
+                    </div>
+                    <div class="heap-object" id="so-heap-arr3">
+                        <div class="heap-address">0x101</div>
+                        <div class="heap-content">
+                            <div class="array-item">[0]: → 0x200</div>
+                            <div class="array-item">[1]: → 0x201</div>
+                            <div class="array-item">[2]: → 0x202</div>
+                        </div>
+                    </div>
+                    <div class="heap-object" id="so-heap-obj1">
+                        <div class="heap-address">0x200</div>
+                        <div class="heap-content">
+                            <div class="obj-prop" id="so-obj-0">{id: 1}</div>
+                        </div>
+                    </div>
+                    <div class="heap-object">
+                        <div class="heap-address">0x201</div>
+                        <div class="heap-content">
+                            <div class="obj-prop">{id: 2}</div>
+                        </div>
+                    </div>
+                    <div class="heap-object">
+                        <div class="heap-address">0x202</div>
+                        <div class="heap-content">
+                            <div class="obj-prop">{id: 3}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deep Copy -->
+        <div class="section">
+            <h2>4️⃣ Deep Copy (structuredClone)</h2>
+            <div class="description">
+                <strong>let arrObj2 = structuredClone(arrObj1)</strong><br>
+                Everything is copied recursively. All new heap addresses created. Completely independent!
+            </div>
+            <div class="controls">
+                <button onclick="demoDeep()">▶️ Run Demo</button>
+                <button class="reset" onclick="resetDeep()">🔄 Reset</button>
+            </div>
+            <div class="memory-container" id="deepContainer">
+                <div class="memory-area stack">
+                    <div class="memory-title">📚 STACK</div>
+                    <div class="stack-item" id="deep-stack-arr1">
+                        <span class="var-name">arrObj1</span>
+                        <span class="var-value pointer">→ 0x300</span>
+                    </div>
+                    <div class="stack-item" id="deep-stack-arr2">
+                        <span class="var-name">arrObj2</span>
+                        <span class="var-value pointer">→ 0x400</span>
+                    </div>
+                </div>
+                <div class="memory-area heap">
+                    <div class="memory-title">📦 HEAP</div>
+                    <div class="heap-object" id="deep-heap-arr1">
+                        <div class="heap-address">0x300</div>
+                        <div class="heap-content">
+                            <div class="array-item">[0]: → 0x310</div>
+                            <div class="array-item">[1]: → 0x311</div>
+                        </div>
+                    </div>
+                    <div class="heap-object" id="deep-heap-obj1">
+                        <div class="heap-address">0x310</div>
+                        <div class="heap-content">
+                            <div class="obj-prop" id="deep-obj1-0">{id: 1}</div>
+                        </div>
+                    </div>
+                    <div class="heap-object">
+                        <div class="heap-address">0x311</div>
+                        <div class="heap-content">
+                            <div class="obj-prop">{id: 2}</div>
+                        </div>
+                    </div>
+                    <div class="heap-object" id="deep-heap-arr2">
+                        <div class="heap-address">0x400</div>
+                        <div class="heap-content">
+                            <div class="array-item">[0]: → 0x410</div>
+                            <div class="array-item">[1]: → 0x411</div>
+                        </div>
+                    </div>
+                    <div class="heap-object" id="deep-heap-obj2">
+                        <div class="heap-address">0x410</div>
+                        <div class="heap-content">
+                            <div class="obj-prop" id="deep-obj2-0">{id: 1}</div>
+                        </div>
+                    </div>
+                    <div class="heap-object">
+                        <div class="heap-address">0x411</div>
+                        <div class="heap-content">
+                            <div class="obj-prop">{id: 2}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stack vs Heap for Primitives -->
+        <div class="section">
+            <h2>💡 Key Insight: Where Primitives Are Stored</h2>
+            <div class="memory-container">
+                <div class="memory-area stack">
+                    <div class="memory-title">📚 STACK</div>
+                    <div class="stack-item">
+                        <span class="var-name">x</span>
+                        <span class="var-value">5</span>
+                    </div>
+                    <div class="stack-item">
+                        <span class="var-name">flag</span>
+                        <span class="var-value">true</span>
+                    </div>
+                    <div style="margin: 20px 0; padding: 15px; background: #e8f5e9; border-radius: 5px; border: 2px solid #4caf50;">
+                        <strong style="color: #2e7d32;">✅ Numbers & Booleans</strong><br>
+                        Fixed size → Stored directly in stack
+                    </div>
+                    <div class="stack-item">
+                        <span class="var-name">name</span>
+                        <span class="var-value pointer">→ 0x502</span>
+                    </div>
+                    <div style="margin: 20px 0; padding: 15px; background: #fff9c4; border-radius: 5px; border: 2px solid #fbc02d;">
+                        <strong style="color: #f57f17;">🔤 Strings (Special!)</strong><br>
+                        Primitive but variable length → Stack holds reference to heap<br>
+                        <em>Still primitive because immutable</em>
+                    </div>
+                    <div class="stack-item">
+                        <span class="var-name">arr</span>
+                        <span class="var-value pointer">→ 0x500</span>
+                    </div>
+                    <div class="stack-item">
+                        <span class="var-name">obj</span>
+                        <span class="var-value pointer">→ 0x501</span>
+                    </div>
+                    <div style="margin: 20px 0; padding: 15px; background: #fff3e0; border-radius: 5px; border: 2px solid #ff9800;">
+                        <strong style="color: #e65100;">⚠️ Arrays & Objects</strong><br>
+                        Stack only holds references
+                    </div>
+                </div>
+                <div class="memory-area heap">
+                    <div class="memory-title">📦 HEAP</div>
+                    <div class="heap-object">
+                        <div class="heap-address">0x502</div>
+                        <div class="heap-content">
+                            <div class="array-item" style="background: #fff9c4; border-color: #fbc02d;">"John"</div>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                            String stored in heap (variable length)<br>
+                            But IMMUTABLE → Can't do name[0] = 'K'
+                        </div>
+                    </div>
+                    <div style="margin: 20px 0; padding: 15px; background: #e3f2fd; border-radius: 5px; border: 2px solid #2196f3;">
+                        <strong style="color: #1565c0;">Arrays are objects!</strong><br>
+                        Even with only primitives, entire array lives in heap
+                    </div>
+                    <div class="heap-object">
+                        <div class="heap-address">0x500</div>
+                        <div class="heap-content">
+                            <div class="array-item">[0]: 1</div>
+                            <div class="array-item">[1]: 2</div>
+                            <div class="array-item">[2]: 3</div>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                            These primitives (1,2,3) are in HEAP because they're inside an array<br>
+                            MUTABLE → Can do arr[0] = 9
+                        </div>
+                    </div>
+                    <div class="heap-object">
+                        <div class="heap-address">0x501</div>
+                        <div class="heap-content">
+                            <div class="obj-prop">{age: 25}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- String Special Behavior -->
+        <div class="section">
+            <h2>🔤 Why Strings Act Like Arrays</h2>
+            <div class="description">
+                <strong>Strings are primitives that behave like objects:</strong>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div style="padding: 20px; background: #e8f5e9; border-radius: 10px; border: 2px solid #4caf50;">
+                    <h3 style="color: #2e7d32; margin-bottom: 10px;">✅ Primitive Traits</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin: 10px 0;">🔒 <strong>Immutable:</strong> Can't change characters</li>
+                        <li style="margin: 10px 0;">📦 <strong>Passed by value</strong> (copied)</li>
+                        <li style="margin: 10px 0;">⚡ <strong>typeof</strong> returns "string"</li>
+                    </ul>
+                </div>
+                <div style="padding: 20px; background: #e3f2fd; border-radius: 10px; border: 2px solid #2196f3;">
+                    <h3 style="color: #1565c0; margin-bottom: 10px;">🎭 Object-Like Behavior</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin: 10px 0;">🔢 <strong>Indexable:</strong> str[0] works</li>
+                        <li style="margin: 10px 0;">📏 <strong>Has .length</strong> property</li>
+                        <li style="margin: 10px 0;">🔧 <strong>Methods:</strong> .toUpperCase(), .slice()</li>
+                    </ul>
+                </div>
+                <div style="padding: 20px; background: #fff3e0; border-radius: 10px; border: 2px solid #ff9800;">
+                    <h3 style="color: #e65100; margin-bottom: 10px;">⚙️ Auto-Boxing</h3>
+                    <p style="margin: 10px 0;">When you call a method on a string, JavaScript temporarily wraps it in a String object, executes the method, then discards the wrapper.</p>
+                    <p style="margin: 10px 0; font-family: 'Courier New', monospace; background: white; padding: 10px; border-radius: 5px;">
+                        str.toUpperCase()<br>
+                        → new String(str).toUpperCase()<br>
+                        → result returned, wrapper deleted
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="section">
+            <h2>📖 Legend</h2>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-box" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-color: #2196f3;"></div>
+                    <span><strong>Stack:</strong> Stores variable names and references</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-color: #ff9800;"></div>
+                    <span><strong>Heap:</strong> Stores actual objects and arrays</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #fff176; border-color: #fbc02d;"></div>
+                    <span><strong>Highlighted:</strong> Being modified/affected</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ffeb3b; border-color: #fbc02d;"></div>
+                    <span><strong>Yellow pulse:</strong> Value just changed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function demoReference() {
+            const arr1Stack = document.getElementById('ref-stack-arr1');
+            const arr2Stack = document.getElementById('ref-stack-arr2');
+            const heapObj = document.getElementById('ref-heap-obj1');
+            const item0 = document.getElementById('ref-item-0');
+
+            arr1Stack.classList.add('highlight');
+            arr2Stack.classList.add('highlight');
+            heapObj.classList.add('highlight');
+
+            setTimeout(() => {
+                item0.textContent = '[0]: 9';
+                item0.classList.add('changed');
+
+                setTimeout(() => {
+                    item0.classList.remove('changed');
+                    arr1Stack.classList.remove('highlight');
+                    arr2Stack.classList.remove('highlight');
+                    heapObj.classList.remove('highlight');
+                }, 1000);
+            }, 1500);
+        }
+
+        function resetReference() {
+            document.getElementById('ref-item-0').textContent = '[0]: 1';
+            document.querySelectorAll('#refContainer .highlight, #refContainer .changed').forEach(el => {
+                el.classList.remove('highlight', 'changed');
+            });
+        }
+
+        function demoShallowPrimitive() {
+            const arr1Stack = document.getElementById('sp-stack-arr1');
+            const heapObj1 = document.getElementById('sp-heap-obj1');
+            const item1 = document.getElementById('sp-item1-0');
+
+            arr1Stack.classList.add('highlight');
+            heapObj1.classList.add('highlight');
+
+            setTimeout(() => {
+                item1.textContent = '[0]: 9';
+                item1.classList.add('changed');
+
+                setTimeout(() => {
+                    item1.classList.remove('changed');
+                    arr1Stack.classList.remove('highlight');
+                    heapObj1.classList.remove('highlight');
+                }, 1000);
+            }, 1500);
+        }
+
+        function resetShallowPrimitive() {
+            document.getElementById('sp-item1-0').textContent = '[0]: 1';
+            document.querySelectorAll('#shallowPrimitiveContainer .highlight, #shallowPrimitiveContainer .changed').forEach(el => {
+                el.classList.remove('highlight', 'changed');
+            });
+        }
+
+        function demoShallowObject() {
+            const arr1Stack = document.getElementById('so-stack-arrObj1');
+            const arr3Stack = document.getElementById('so-stack-arrObj3');
+            const heapArr1 = document.getElementById('so-heap-arr1');
+            const heapArr3 = document.getElementById('so-heap-arr3');
+            const heapObj1 = document.getElementById('so-heap-obj1');
+            const objProp = document.getElementById('so-obj-0');
+
+            arr1Stack.classList.add('highlight');
+            arr3Stack.classList.add('highlight');
+            heapArr1.classList.add('highlight');
+            heapArr3.classList.add('highlight');
+            heapObj1.classList.add('highlight');
+
+            setTimeout(() => {
+                objProp.textContent = '{id: 9}';
+                objProp.classList.add('changed');
+
+                setTimeout(() => {
+                    objProp.classList.remove('changed');
+                    arr1Stack.classList.remove('highlight');
+                    arr3Stack.classList.remove('highlight');
+                    heapArr1.classList.remove('highlight');
+                    heapArr3.classList.remove('highlight');
+                    heapObj1.classList.remove('highlight');
+                }, 1000);
+            }, 1500);
+        }
+
+        function resetShallowObject() {
+            document.getElementById('so-obj-0').textContent = '{id: 1}';
+            document.querySelectorAll('#shallowObjectContainer .highlight, #shallowObjectContainer .changed').forEach(el => {
+                el.classList.remove('highlight', 'changed');
+            });
+        }
+
+        function demoDeep() {
+            const arr1Stack = document.getElementById('deep-stack-arr1');
+            const heapObj1 = document.getElementById('deep-heap-obj1');
+            const obj1Prop = document.getElementById('deep-obj1-0');
+
+            arr1Stack.classList.add('highlight');
+            heapObj1.classList.add('highlight');
+
+            setTimeout(() => {
+                obj1Prop.textContent = '{id: 99}';
+                obj1Prop.classList.add('changed');
+
+                setTimeout(() => {
+                    obj1Prop.classList.remove('changed');
+                    arr1Stack.classList.remove('highlight');
+                    heapObj1.classList.remove('highlight');
+                }, 1000);
+            }, 1500);
+        }
+
+        function resetDeep() {
+            document.getElementById('deep-obj1-0').textContent = '{id: 1}';
+            document.querySelectorAll('#deepContainer .highlight, #deepContainer .changed').forEach(el => {
+                el.classList.remove('highlight', 'changed');
+            });
+        }
+    </script>
+</body>
+</html>
