@@ -43,3 +43,28 @@ digits does not contain any leading 0's.
 Leetcode Link: https://leetcode.com/problems/plus-one
 
 # Solutions
+
+```
+/**
+ * @param {number[]} digits
+ * @return {number[]}
+ */
+var plusOne = function(digits) {
+    let k = digits.length - 1;
+    let digit = digits[k];
+    while(digit + 1 === 10) {
+        digits[k] = 0;
+        digit = digits[k-1];
+        k--;
+        if (k < 0) break;
+    }
+    if (k < 0) {
+        digits = [1, ...digits];
+    } else {
+        digits[k] = digit + 1;
+    }
+    return digits;
+};
+```
+
+![PlusOne1.png](./img/PlusOne1.png)
