@@ -31,5 +31,44 @@ Constraints:
 nums contains distinct values sorted in ascending order.
 -104 <= target <= 104
 ```
+Leetcode link: https://leetcode.com/problems/search-insert-position
 
 # Solution
+
+```
+/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number}
+ */
+var searchInsert = function(nums, target) {
+    //O(logn) means binary search
+    let left = 0;
+    let right = nums.length - 1;
+    let m = left + Math.floor((right - left)/2);
+    while(true) {
+        //console.log(left, m, right);
+        if (nums[m] ===  target) return m;
+        if (left >= right) {
+            if (nums[left] < target) {
+                return left + 1;
+            }
+            if (nums[left] > target) {
+                return left;
+            }
+        }
+        if (nums[m] > target) {
+            //go left
+            right = m - 1;
+        }
+
+        if (nums[m] < target) {
+            //go right
+            left = m + 1;
+        }
+        m = left + Math.floor((right - left)/2);
+    }
+};
+```
+
+![Search Insert Position](./img/SearchInsertPosition1.png)

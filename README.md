@@ -5,4 +5,4 @@
 - [X] [Remove Duplicates from Sorted Array](./RemoveDuplicatesfromSortedArray.md)
 - [X] [Longest Common Prefix](./LongestCommonPrefix.md)
 - [X] [Remove Element](./RemoveElement.md)
-- [ ] [Search Insert Position](./SearchInsertPosition.md)
+- [X] [Search Insert Position](./SearchInsertPosition.md)
