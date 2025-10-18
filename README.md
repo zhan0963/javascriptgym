@@ -16,3 +16,7 @@
 
 
 ### Objects
+
+### Other Topics
+[Stack and Heap, Shallow Copy](./otherTopics/ShallowCopy.md)
+[Sorting Visualizer](./otherTopics/sorting-visualizer.html)
