@@ -11,6 +11,7 @@
 - [X] [Search Insert Position](./problems/arrays/SearchInsertPosition.md)
 - [X] [Plus One](./problems/arrays/PlusOne.md)
 - [X] [Merge Sorted Array](./problems/arrays/MergeSortedArray.md)
+- [X] [Convert Sorted Array to Binary Search Tree](./problems/arrays/ConvertSortedArraytoBinarySearchTree.md)
 
 ### Strings
 
@@ -20,3 +21,4 @@
 ### Other Topics
 - [Stack and Heap, Shallow Copy](./otherTopics/ShallowCopy.md)
 - [Sorting Visualizer](./otherTopics/sorting-visualizer.html)
+- [JS Execution Visualizer](./otherTopics/js-execution-visualizer.html)

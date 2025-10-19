@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Execution Model Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .mode-selector {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .mode-btn {
+            background: white;
+            border: none;
+            padding: 15px 40px;
+            margin: 0 10px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        
+        .mode-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .agent-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .agent-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .agent-header h2 {
+            color: #667eea;
+            font-size: 1.8em;
+        }
+        
+        .execution-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .platform-area {
+            background: #fff3cd;
+            border: 3px dashed #ff9800;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .event-loop-area {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 3px solid #2196f3;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .event-loop-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .event-loop-header h3 {
+            color: #1976d2;
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+        
+        .event-loop-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .loop-component {
+            background: white;
+            border-radius: 12px;
+            padding: 15px 25px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            text-align: center;
+            min-width: 150px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .loop-component.active {
+            background: #4caf50;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .loop-label {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        
+        .loop-status {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+        
+        .loop-arrow {
+            position: absolute;
+            font-size: 3em;
+            color: #2196f3;
+            opacity: 0.3;
+            z-index: 1;
+        }
+        
+        .loop-arrow.active {
+            opacity: 1;
+            animation: arrowPulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes arrowPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+        
+        .loop-description {
+            text-align: center;
+            margin-top: 15px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.95em;
+            color: #1976d2;
+            font-weight: 500;
+        }
+        
+        .loop-cycle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 60%;
+            border: 3px dashed #2196f3;
+            border-radius: 50%;
+            opacity: 0.2;
+            z-index: 0;
+        }
+        
+        .loop-cycle.active {
+            opacity: 0.5;
+            animation: rotate 3s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        .platform-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .platform-header h3 {
+            color: #f57c00;
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+        
+        .platform-note {
+            font-size: 0.9em;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .platform-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .platform-section {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .platform-task {
+            background: #fff9e6;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #ff9800;
+            font-size: 0.9em;
+        }
+        
+        .platform-task.active {
+            background: #ffecb3;
+            border-left-color: #f57c00;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .task-name {
+            font-weight: bold;
+            color: #f57c00;
+            margin-bottom: 3px;
+        }
+        
+        .task-status {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .code-section, .heap-section, .stack-section, .queue-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 1.2em;
+            color: #495057;
+        }
+        
+        .code-section {
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        
+        .code-section .section-title {
+            color: #4ec9b0;
+            border-color: #4ec9b0;
+        }
+        
+        .code-line {
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+        
+        .code-line.executing {
+            background: #264f78;
+            border-left: 4px solid #4ec9b0;
+            transform: translateX(5px);
+        }
+        
+        .stack-frame, .queue-job, .heap-object {
+            background: white;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        
+        .stack-frame {
+            border-left-color: #667eea;
+        }
+        
+        .queue-job {
+            border-left-color: #f39c12;
+            background: #fff9e6;
+        }
+        
+        .heap-object {
+            border-left-color: #e74c3c;
+            background: #ffe6e6;
+        }
+        
+        .frame-name {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .frame-vars {
+            font-size: 0.9em;
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .control-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            margin: 0 5px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 1.1em;
+            color: #495057;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+        
+        .empty-state {
+            color: #adb5bd;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stack-frame, .queue-job, .heap-object {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 JavaScript Execution Model Visualizer</h1>
+        
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('sync')">Synchronous Code</button>
+            <button class="mode-btn" onclick="switchMode('async')">Asynchronous Code</button>
+        </div>
+        
+        <div class="agent-container">
+            <div class="agent-header">
+                <h2>Agent (Execution Thread)</h2>
+                <p id="mode-description"></p>
+            </div>
+            
+            <div class="event-loop-area" id="event-loop-area" style="display: none;">
+                <div class="event-loop-header">
+                    <h3>🔄 Event Loop (The Heart of JavaScript Async)</h3>
+                    <p class="platform-note">Continuously checks: "Is stack empty? Any jobs ready?"</p>
+                </div>
+                <div class="event-loop-content">
+                    <div class="loop-cycle" id="loop-cycle"></div>
+                    
+                    <div class="loop-component" id="loop-step1">
+                        <div class="loop-label">1️⃣ Check Stack</div>
+                        <div class="loop-status" id="stack-status">Empty</div>
+                    </div>
+                    
+                    <span class="loop-arrow" id="arrow1">→</span>
+                    
+                    <div class="loop-component" id="loop-step2">
+                        <div class="loop-label">2️⃣ Check Microtasks</div>
+                        <div class="loop-status" id="microtask-status">Empty</div>
+                    </div>
+                    
+                    <span class="loop-arrow" id="arrow2">→</span>
+                    
+                    <div class="loop-component" id="loop-step3">
+                        <div class="loop-label">3️⃣ Check Macrotasks</div>
+                        <div class="loop-status" id="macrotask-status">Empty</div>
+                    </div>
+                    
+                    <span class="loop-arrow" id="arrow3">→</span>
+                    
+                    <div class="loop-component" id="loop-step4">
+                        <div class="loop-label">4️⃣ Execute Job</div>
+                        <div class="loop-status" id="execute-status">Waiting</div>
+                    </div>
+                </div>
+                <div class="loop-description" id="loop-description">Event loop is waiting...</div>
+            </div>
+            
+            <div class="platform-area" id="platform-area" style="display: none;">
+                <div class="platform-header">
+                    <h3>🔧 Platform Layer (Multi-threaded - Node.js/Browser APIs)</h3>
+                    <p class="platform-note">This runs OUTSIDE the JavaScript engine in separate threads/processes</p>
+                </div>
+                <div class="platform-content">
+                    <div class="platform-section">
+                        <div class="section-title" style="font-size: 1em;">⚙️ Active Operations</div>
+                        <div id="platform-active"></div>
+                    </div>
+                    <div class="platform-section">
+                        <div class="section-title" style="font-size: 1em;">✅ Completed (Ready to Queue)</div>
+                        <div id="platform-completed"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="execution-area">
+                <div class="code-section">
+                    <div class="section-title">📝 Source Code</div>
+                    <div id="code-display"></div>
+                </div>
+                
+                <div class="heap-section">
+                    <div class="section-title">🗄️ Heap</div>
+                    <div id="heap-display"></div>
+                </div>
+                
+                <div class="stack-section">
+                    <div class="section-title">📚 Call Stack</div>
+                    <div id="stack-display"></div>
+                </div>
+                
+                <div class="queue-section">
+                    <div class="section-title">⏰ Job Queue</div>
+                    <div id="queue-display"></div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="control-btn" onclick="reset()">↺ Reset</button>
+                <button class="control-btn" onclick="step()" id="step-btn">▶ Step</button>
+                <button class="control-btn" onclick="autoRun()" id="auto-btn">▶▶ Auto Run</button>
+            </div>
+            
+            <div class="status" id="status">Ready to execute</div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #667eea;"></div>
+                    <span>Stack Frame</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f39c12;"></div>
+                    <span>Job Queue</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e74c3c;"></div>
+                    <span>Heap Object</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'sync';
+        let currentStep = 0;
+        let isRunning = false;
+        let runInterval = null;
+
+        const syncScenario = {
+            description: 'Synchronous execution - one operation at a time, LIFO stack',
+            code: [
+                'function foo(b) {',
+                '  const a = 10;',
+                '  return a + b + 11;',
+                '}',
+                '',
+                'function bar(x) {',
+                '  const y = 3;',
+                '  return foo(x * y);',
+                '}',
+                '',
+                'const baz = bar(7);'
+            ],
+            steps: [
+                {
+                    line: 10,
+                    stack: [{name: 'Global', vars: 'foo: function, bar: function'}],
+                    heap: [{name: 'Function: foo', details: 'code + scope'}, {name: 'Function: bar', details: 'code + scope'}],
+                    queue: [],
+                    status: 'Global context created, functions declared'
+                },
+                {
+                    line: 10,
+                    stack: [{name: 'Global', vars: 'foo, bar, baz: undefined'}, {name: 'bar(7)', vars: 'x: 7'}],
+                    heap: [{name: 'Function: foo', details: 'code + scope'}, {name: 'Function: bar', details: 'code + scope'}],
+                    queue: [],
+                    status: 'Calling bar(7) - new frame pushed'
+                },
+                {
+                    line: 6,
+                    stack: [{name: 'Global', vars: 'foo, bar, baz: undefined'}, {name: 'bar(7)', vars: 'x: 7, y: 3'}],
+                    heap: [{name: 'Function: foo', details: 'code + scope'}, {name: 'Function: bar', details: 'code + scope'}],
+                    queue: [],
+                    status: 'Inside bar: y = 3 declared'
+                },
+                {
+                    line: 7,
+                    stack: [
+                        {name: 'Global', vars: 'foo, bar, baz: undefined'}, 
+                        {name: 'bar(7)', vars: 'x: 7, y: 3'}, 
+                        {name: 'foo(21)', vars: 'b: 21'}
+                    ],
+                    heap: [{name: 'Function: foo', details: 'code + scope'}, {name: 'Function: bar', details: 'code + scope'}],
+                    queue: [],
+                    status: 'Calling foo(21) - new frame pushed'
+                },
+                {
+                    line: 1,
+                    stack: [
+                        {name: 'Global', vars: 'foo, bar, baz: undefined'}, 
+                        {name: 'bar(7)', vars: 'x: 7, y: 3'}, 
+                        {name: 'foo(21)', vars: 'b: 21, a: 10'}
+                    ],
+                    heap: [{name: 'Function: foo', details: 'code + scope'}, {name: 'Function: bar', details: 'code + scope'}],
+                    queue: [],
+                    status: 'Inside foo: a = 10 declared'
+                },
+                {
+                    line: 2,
+                    stack: [
+                        {name: 'Global', vars: 'foo, bar, baz: undefined'}, 
+                        {name: 'bar(7)', vars: 'x: 7, y: 3'}
+                    ],
+                    heap: [{name: 'Function: foo', details: 'code + scope'}, {name: 'Function: bar', details: 'code + scope'}],
+                    queue: [],
+                    status: 'foo returns 42 - frame popped'
+                },
+                {
+                    line: 7,
+                    stack: [{name: 'Global', vars: 'foo, bar, baz: undefined'}],
+                    heap: [{name: 'Function: foo', details: 'code + scope'}, {name: 'Function: bar', details: 'code + scope'}],
+                    queue: [],
+                    status: 'bar returns 42 - frame popped'
+                },
+                {
+                    line: 10,
+                    stack: [{name: 'Global', vars: 'foo, bar, baz: 42'}],
+                    heap: [{name: 'Function: foo', details: 'code + scope'}, {name: 'Function: bar', details: 'code + scope'}],
+                    queue: [],
+                    status: 'baz = 42 assigned. Execution complete!'
+                }
+            ]
+        };
+
+        const asyncScenario = {
+            description: 'Asynchronous execution - Platform handles I/O, notifies JS when done',
+            code: [
+                'console.log("Start");',
+                '',
+                'db.query("SELECT * FROM users")',
+                '  .then(users => {',
+                '    console.log("Got users:", users);',
+                '  });',
+                '',
+                'setTimeout(() => {',
+                '  console.log("Timer done");',
+                '}, 1000);',
+                '',
+                'console.log("End");'
+            ],
+            steps: [
+                {
+                    line: 0,
+                    stack: [{name: 'Global', vars: 'executing script'}],
+                    heap: [],
+                    queue: [],
+                    platform: {active: [], completed: []},
+                    eventLoop: {step: 0, description: 'Event loop waiting - stack is busy', stackEmpty: false, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'Script starts executing'
+                },
+                {
+                    line: 0,
+                    stack: [{name: 'Global', vars: 'executing script'}],
+                    heap: [],
+                    queue: [],
+                    platform: {active: [], completed: []},
+                    eventLoop: {step: 0, description: 'Event loop waiting - stack is busy executing synchronous code', stackEmpty: false, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'Console: "Start" (synchronous)'
+                },
+                {
+                    line: 2,
+                    stack: [{name: 'Global', vars: 'executing script'}],
+                    heap: [{name: 'Promise handler', details: 'lines 3-5'}],
+                    queue: [],
+                    platform: {
+                        active: [{name: 'DB Query', status: 'Executing SELECT on thread pool...', active: true}],
+                        completed: []
+                    },
+                    eventLoop: {step: 0, description: 'Event loop waiting - stack still executing', stackEmpty: false, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'db.query() called - Platform starts DB work in SEPARATE thread'
+                },
+                {
+                    line: 7,
+                    stack: [{name: 'Global', vars: 'executing script'}],
+                    heap: [
+                        {name: 'Promise handler', details: 'lines 3-5'},
+                        {name: 'Timer callback', details: 'line 8-9'}
+                    ],
+                    queue: [],
+                    platform: {
+                        active: [
+                            {name: 'DB Query', status: 'Executing SELECT on thread pool...', active: true},
+                            {name: 'Timer', status: 'OS timer running (1000ms)...', active: true}
+                        ],
+                        completed: []
+                    },
+                    eventLoop: {step: 0, description: 'Event loop waiting - stack still executing', stackEmpty: false, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'setTimeout() called - Platform starts timer, JS continues!'
+                },
+                {
+                    line: 11,
+                    stack: [{name: 'Global', vars: 'executing script'}],
+                    heap: [
+                        {name: 'Promise handler', details: 'lines 3-5'},
+                        {name: 'Timer callback', details: 'line 8-9'}
+                    ],
+                    queue: [],
+                    platform: {
+                        active: [
+                            {name: 'DB Query', status: 'Executing SELECT on thread pool...', active: true},
+                            {name: 'Timer', status: 'OS timer running (900ms left)...', active: true}
+                        ],
+                        completed: []
+                    },
+                    eventLoop: {step: 0, description: 'Event loop waiting - stack about to be empty', stackEmpty: false, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'Console: "End" - JS didn\'t wait! DB still working in background'
+                },
+                {
+                    line: -1,
+                    stack: [],
+                    heap: [
+                        {name: 'Promise handler', details: 'lines 3-5'},
+                        {name: 'Timer callback', details: 'line 8-9'}
+                    ],
+                    queue: [],
+                    platform: {
+                        active: [
+                            {name: 'DB Query', status: 'Executing SELECT on thread pool...', active: true},
+                            {name: 'Timer', status: 'OS timer running (700ms left)...', active: true}
+                        ],
+                        completed: []
+                    },
+                    eventLoop: {step: 1, description: '✅ Stack is empty! Checking microtask queue...', stackEmpty: true, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'Stack empty - Event loop activated! Checking for jobs...'
+                },
+                {
+                    line: -1,
+                    stack: [],
+                    heap: [
+                        {name: 'Promise handler', details: 'lines 3-5'},
+                        {name: 'Timer callback', details: 'line 8-9'}
+                    ],
+                    queue: [],
+                    platform: {
+                        active: [
+                            {name: 'Timer', status: 'OS timer running (200ms left)...', active: true}
+                        ],
+                        completed: [
+                            {name: 'DB Query', status: 'Result ready: [{id:1, name:"Alice"}...]'}
+                        ]
+                    },
+                    eventLoop: {step: 1, description: 'No microtasks yet. Checking macrotasks...', stackEmpty: true, hasMicrotasks: false, hasMacrotasks: false},
+                    status: '💡 DB query completed! Platform signals: "I have data ready"'
+                },
+                {
+                    line: -1,
+                    stack: [],
+                    heap: [
+                        {name: 'Promise handler', details: 'lines 3-5'},
+                        {name: 'Timer callback', details: 'line 8-9'}
+                    ],
+                    queue: [
+                        {name: 'Microtask', details: 'DB Promise.then callback + data', color: '#e74c3c'}
+                    ],
+                    platform: {
+                        active: [
+                            {name: 'Timer', status: 'OS timer running (50ms left)...', active: true}
+                        ],
+                        completed: []
+                    },
+                    eventLoop: {step: 2, description: '🎯 Found microtask! Will execute next', stackEmpty: true, hasMicrotasks: true, hasMacrotasks: false},
+                    status: 'Platform added microtask to queue - Event loop detected it!'
+                },
+                {
+                    line: 3,
+                    stack: [{name: 'Promise callback', vars: 'users: [{...}]'}],
+                    heap: [{name: 'Timer callback', details: 'line 8-9'}],
+                    queue: [],
+                    platform: {
+                        active: [
+                            {name: 'Timer', status: 'Timer expired!', active: false}
+                        ],
+                        completed: []
+                    },
+                    eventLoop: {step: 4, description: '▶️ Executing microtask - stack is busy again', stackEmpty: false, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'Console: "Got users: [...]" - Event loop executed the microtask!'
+                },
+                {
+                    line: -1,
+                    stack: [],
+                    heap: [{name: 'Timer callback', details: 'line 8-9'}],
+                    queue: [],
+                    platform: {
+                        active: [],
+                        completed: [
+                            {name: 'Timer', status: 'Timeout completed'}
+                        ]
+                    },
+                    eventLoop: {step: 1, description: '🔁 Stack empty again. Checking microtasks...', stackEmpty: true, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'Microtask done - Event loop cycles again'
+                },
+                {
+                    line: -1,
+                    stack: [],
+                    heap: [{name: 'Timer callback', details: 'line 8-9'}],
+                    queue: [
+                        {name: 'Macrotask', details: 'setTimeout callback', color: '#f39c12'}
+                    ],
+                    platform: {
+                        active: [],
+                        completed: []
+                    },
+                    eventLoop: {step: 3, description: 'No microtasks. 🎯 Found macrotask! Will execute next', stackEmpty: true, hasMicrotasks: false, hasMacrotasks: true},
+                    status: 'Platform added macrotask - Event loop found it'
+                },
+                {
+                    line: 8,
+                    stack: [{name: 'setTimeout callback', vars: 'executing'}],
+                    heap: [],
+                    queue: [],
+                    platform: {
+                        active: [],
+                        completed: []
+                    },
+                    eventLoop: {step: 4, description: '▶️ Executing macrotask - stack is busy', stackEmpty: false, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'Console: "Timer done" - Event loop executed the macrotask!'
+                },
+                {
+                    line: -1,
+                    stack: [],
+                    heap: [],
+                    queue: [],
+                    platform: {
+                        active: [],
+                        completed: []
+                    },
+                    eventLoop: {step: 1, description: '🔁 Stack empty. Nothing in queues. Event loop keeps cycling...', stackEmpty: true, hasMicrotasks: false, hasMacrotasks: false},
+                    status: 'All done! Event loop continues running forever, waiting for new jobs'
+                }
+            ]
+        };
+
+        function switchMode(mode) {
+            currentMode = mode;
+            currentStep = 0;
+            
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            if (runInterval) {
+                clearInterval(runInterval);
+                runInterval = null;
+                isRunning = false;
+            }
+            
+            render();
+        }
+
+        function render() {
+            const scenario = currentMode === 'sync' ? syncScenario : asyncScenario;
+            const step = scenario.steps[currentStep];
+            
+            document.getElementById('mode-description').textContent = scenario.description;
+            
+            // Show/hide event loop and platform areas based on mode
+            const eventLoopArea = document.getElementById('event-loop-area');
+            const platformArea = document.getElementById('platform-area');
+            
+            if (currentMode === 'async') {
+                // Render event loop
+                eventLoopArea.style.display = 'block';
+                const eventLoop = step.eventLoop;
+                
+                // Update loop cycle animation
+                const loopCycle = document.getElementById('loop-cycle');
+                loopCycle.className = eventLoop.stackEmpty ? 'loop-cycle active' : 'loop-cycle';
+                
+                // Update each step of the event loop
+                const step1 = document.getElementById('loop-step1');
+                const step2 = document.getElementById('loop-step2');
+                const step3 = document.getElementById('loop-step3');
+                const step4 = document.getElementById('loop-step4');
+                
+                step1.className = eventLoop.step === 1 ? 'loop-component active' : 'loop-component';
+                step2.className = eventLoop.step === 2 ? 'loop-component active' : 'loop-component';
+                step3.className = eventLoop.step === 3 ? 'loop-component active' : 'loop-component';
+                step4.className = eventLoop.step === 4 ? 'loop-component active' : 'loop-component';
+                
+                // Update arrows
+                document.getElementById('arrow1').className = eventLoop.step >= 1 ? 'loop-arrow active' : 'loop-arrow';
+                document.getElementById('arrow2').className = eventLoop.step >= 2 ? 'loop-arrow active' : 'loop-arrow';
+                document.getElementById('arrow3').className = eventLoop.step >= 3 ? 'loop-arrow active' : 'loop-arrow';
+                
+                // Update status texts
+                document.getElementById('stack-status').textContent = eventLoop.stackEmpty ? '✅ Empty' : '❌ Busy';
+                document.getElementById('microtask-status').textContent = eventLoop.hasMicrotasks ? '✅ Has Jobs' : 'Empty';
+                document.getElementById('macrotask-status').textContent = eventLoop.hasMacrotasks ? '✅ Has Jobs' : 'Empty';
+                document.getElementById('execute-status').textContent = eventLoop.step === 4 ? '▶️ Running' : 'Idle';
+                
+                document.getElementById('loop-description').textContent = eventLoop.description;
+                
+                // Render platform layer
+                platformArea.style.display = 'block';
+                
+                // Render platform active operations
+                const platformActive = document.getElementById('platform-active');
+                if (step.platform.active.length === 0) {
+                    platformActive.innerHTML = '<div class="empty-state">No operations running</div>';
+                } else {
+                    platformActive.innerHTML = step.platform.active.map(task => 
+                        `<div class="platform-task ${task.active ? 'active' : ''}">
+                            <div class="task-name">${task.name}</div>
+                            <div class="task-status">${task.status}</div>
+                        </div>`
+                    ).join('');
+                }
+                
+                // Render platform completed operations
+                const platformCompleted = document.getElementById('platform-completed');
+                if (step.platform.completed.length === 0) {
+                    platformCompleted.innerHTML = '<div class="empty-state">Nothing ready yet</div>';
+                } else {
+                    platformCompleted.innerHTML = step.platform.completed.map(task => 
+                        `<div class="platform-task">
+                            <div class="task-name">${task.name}</div>
+                            <div class="task-status">${task.status}</div>
+                        </div>`
+                    ).join('');
+                }
+            } else {
+                eventLoopArea.style.display = 'none';
+                platformArea.style.display = 'none';
+            }
+            
+            // Render code
+            const codeDisplay = document.getElementById('code-display');
+            codeDisplay.innerHTML = scenario.code.map((line, idx) => {
+                const isExecuting = idx === step.line;
+                return `<div class="code-line ${isExecuting ? 'executing' : ''}">${line || '&nbsp;'}</div>`;
+            }).join('');
+            
+            // Render heap
+            const heapDisplay = document.getElementById('heap-display');
+            if (step.heap.length === 0) {
+                heapDisplay.innerHTML = '<div class="empty-state">Empty</div>';
+            } else {
+                heapDisplay.innerHTML = step.heap.map(obj => 
+                    `<div class="heap-object">
+                        <div class="frame-name">${obj.name}</div>
+                        <div class="frame-vars">${obj.details}</div>
+                    </div>`
+                ).join('');
+            }
+            
+            // Render stack (reverse order - top of stack first)
+            const stackDisplay = document.getElementById('stack-display');
+            if (step.stack.length === 0) {
+                stackDisplay.innerHTML = '<div class="empty-state">Empty</div>';
+            } else {
+                stackDisplay.innerHTML = [...step.stack].reverse().map(frame => 
+                    `<div class="stack-frame">
+                        <div class="frame-name">${frame.name}</div>
+                        <div class="frame-vars">${frame.vars}</div>
+                    </div>`
+                ).join('');
+            }
+            
+            // Render queue
+            const queueDisplay = document.getElementById('queue-display');
+            if (step.queue.length === 0) {
+                queueDisplay.innerHTML = '<div class="empty-state">Empty</div>';
+            } else {
+                queueDisplay.innerHTML = step.queue.map(job => 
+                    `<div class="queue-job">
+                        <div class="frame-name">${job.name}</div>
+                        <div class="frame-vars">${job.details}</div>
+                    </div>`
+                ).join('');
+            }
+            
+            // Update status
+            document.getElementById('status').textContent = 
+                `Step ${currentStep + 1}/${scenario.steps.length}: ${step.status}`;
+            
+            // Update buttons
+            const stepBtn = document.getElementById('step-btn');
+            stepBtn.disabled = currentStep >= scenario.steps.length - 1 && !isRunning;
+        }
+
+        function step() {
+            const scenario = currentMode === 'sync' ? syncScenario : asyncScenario;
+            if (currentStep < scenario.steps.length - 1) {
+                currentStep++;
+                render();
+            }
+        }
+
+        function reset() {
+            currentStep = 0;
+            if (runInterval) {
+                clearInterval(runInterval);
+                runInterval = null;
+                isRunning = false;
+                document.getElementById('auto-btn').textContent = '▶▶ Auto Run';
+            }
+            render();
+        }
+
+        function autoRun() {
+            const scenario = currentMode === 'sync' ? syncScenario : asyncScenario;
+            
+            if (isRunning) {
+                clearInterval(runInterval);
+                runInterval = null;
+                isRunning = false;
+                document.getElementById('auto-btn').textContent = '▶▶ Auto Run';
+            } else {
+                isRunning = true;
+                document.getElementById('auto-btn').textContent = '⏸ Pause';
+                
+                runInterval = setInterval(() => {
+                    if (currentStep < scenario.steps.length - 1) {
+                        currentStep++;
+                        render();
+                    } else {
+                        clearInterval(runInterval);
+                        runInterval = null;
+                        isRunning = false;
+                        document.getElementById('auto-btn').textContent = '▶▶ Auto Run';
+                    }
+                }, 1500);
+            }
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
