@@ -14,7 +14,7 @@
 - [X] [Convert Sorted Array to Binary Search Tree](./problems/arrays/ConvertSortedArraytoBinarySearchTree.md)
 
 ### Strings
-
+- [X] [Roman to Integer](./problems/Strings/RomantoInteger.md)
 
 ### Objects
 
