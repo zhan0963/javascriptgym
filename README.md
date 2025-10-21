@@ -15,6 +15,7 @@
 
 ### Strings
 - [X] [Roman to Integer](./problems/Strings/RomantoInteger.md)
+- [X] [Valid Parentheses](./problems/Strings/Valid1Parentheses.md)
 
 ### Objects
 
