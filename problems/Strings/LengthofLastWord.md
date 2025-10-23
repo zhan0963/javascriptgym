@@ -37,7 +37,13 @@ Leetcode Link: https://leetcode.com/problems/length-of-last-word
 # Solution
 
 ```
-
+/**
+ * @param {string} s
+ * @return {number}
+ */
+var lengthOfLastWord = function(s) {
+    return s.trim().split(" ").at(-1).length;
+};
 ```
 
 ![LengthofLastWord1.png](./img/LengthofLastWord1.png)
