@@ -17,7 +17,8 @@
 - [X] [Roman to Integer](./problems/Strings/RomantoInteger.md)
 - [X] [Valid Parentheses](./problems/Strings/Valid1Parentheses.md)
 - [X] [Find the Index of the First Occurrence in a String](./problems/Strings/FindtheIndexoftheFirstOccurrenceinaString.md)
-- [X] [Length of Last Word](/problems/Strings/LengthofLastWord.md)
+- [X] [Length of Last Word](./problems/Strings/LengthofLastWord.md)
+- [X] [Add Binary](./problems/Strings/AddBinary.md)
 
 ### Objects
 
