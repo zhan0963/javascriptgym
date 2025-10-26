@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Pointer Algorithm Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .panel h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel h2::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .visualizer {
+            grid-column: 1 / -1;
+        }
+
+        .array-container {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .array-item {
+            position: relative;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .array-index {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .array-value {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .array-value.start {
+            border-color: #28a745;
+            background: #d4edda;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+
+        .array-value.end {
+            border-color: #dc3545;
+            background: #f8d7da;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        }
+
+        .array-value.both {
+            border-color: #ffc107;
+            background: #fff3cd;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+        }
+
+        .array-value.in-window {
+            background: #e7f3ff;
+            border-color: #667eea;
+        }
+
+        .pointer-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
+        .pointer-label.start {
+            background: #28a745;
+            color: white;
+        }
+
+        .pointer-label.end {
+            background: #dc3545;
+            color: white;
+        }
+
+        .pointer-label.both {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .variables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .variable-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .variable-name {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .variable-value {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #333;
+            word-break: break-all;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .step-info {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .step-counter {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 4px solid #dc3545;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 4px solid #28a745;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .help-text {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 4px solid #17a2b8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .help-text strong {
+            color: #0c5460;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Two Pointer Algorithm Visualizer</h1>
+            <p>Step through your code and visualize pointers, arrays, and variables in real-time</p>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <h2>Your Code</h2>
+                <div class="input-group">
+                    <label>Paste your function here (just paste your original code, no modifications needed!):</label>
+                    <textarea id="codeInput" placeholder="Paste your JavaScript function here...">/**
+ * @param {string} s
+ * @return {number}
+ */
+var lengthOfLongestSubstring = function(s) {
+    let strObj = {};
+    let start = 0;
+    let end = 0;
+    let max = 0;
+    
+    for (;end < s.length; end++) {
+        if (strObj[s[end]] !== undefined) {
+            if (max < (end - start)) {
+                max = (end - start);
+            }
+            
+            if (strObj[s[end]] > start) {
+                start = strObj[s[end]] + 1;
+            }
+        }
+        
+        strObj[s[end]] = end;
+    }
+    
+    return (end - start) > max? (end - start): max;
+};</textarea>
+                </div>
+                <div class="help-text">
+                    <strong>✨ Auto-instrumentation enabled!</strong><br>
+                    Just paste your original code - the tool will automatically detect your variables (start, end, etc.) and inject capture calls in the background. No code modifications needed!
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Test Input</h2>
+                <div class="input-group">
+                    <label>Test String/Array:</label>
+                    <input type="text" id="testInput" value="abcabcbb" placeholder='Enter test string (e.g., "abcabcbb")'>
+                </div>
+                <div class="controls">
+                    <button class="btn-primary" onclick="runCode()">▶️ Run & Generate Steps</button>
+                    <button class="btn-secondary" onclick="resetVisualization()">🔄 Reset</button>
+                </div>
+                <div id="message"></div>
+            </div>
+
+            <div class="panel visualizer">
+                <h2>Visualization</h2>
+                <div id="visualizationArea">
+                    <p style="color: #999; text-align: center; padding: 40px;">Run your code to see the visualization</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let states = [];
+        let currentStep = 0;
+
+        // Global capture function that user's code will call
+        window.capture = function(s, vars) {
+            const state = {
+                s: s,
+                variables: {}
+            };
+            
+            // Deep clone the variables
+            for (let key in vars) {
+                try {
+                    if (typeof vars[key] === 'object' && vars[key] !== null) {
+                        state.variables[key] = JSON.parse(JSON.stringify(vars[key]));
+                    } else {
+                        state.variables[key] = vars[key];
+                    }
+                } catch (e) {
+                    state.variables[key] = String(vars[key]);
+                }
+            }
+            
+            states.push(state);
+        };
+
+        function runCode() {
+            try {
+                const code = document.getElementById('codeInput').value;
+                const testInput = document.getElementById('testInput').value;
+                
+                if (!code.trim()) {
+                    showMessage('Please enter your code', 'error');
+                    return;
+                }
+                
+                if (!testInput.trim()) {
+                    showMessage('Please enter test input', 'error');
+                    return;
+                }
+
+                // Clear previous results
+                states = [];
+                currentStep = 0;
+
+                // Automatically instrument the code
+                const instrumentedCode = autoInstrumentCode(code, testInput);
+                
+                // Execute the instrumented function
+                eval(instrumentedCode);
+
+                if (states.length === 0) {
+                    showMessage('No states captured. Make sure your code has a for loop with variables.', 'error');
+                    return;
+                }
+
+                showMessage(`✅ Successfully captured ${states.length} execution steps!`, 'success');
+                displayState(0);
+                
+            } catch (error) {
+                showMessage(`Error: ${error.message}\n\n${error.stack || ''}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function autoInstrumentCode(code, testInput) {
+            // Extract the function body
+            const funcMatch = code.match(/function\s*\([^)]*\)\s*{([\s\S]*)}/);
+            if (!funcMatch) {
+                throw new Error('Could not parse function. Make sure it\'s in format: var name = function(s) { ... }');
+            }
+
+            const functionBody = funcMatch[1];
+            
+            // Extract variable declarations
+            const variables = [];
+            const varRegex = /(?:let|const|var)\s+(\w+)\s*=/g;
+            let match;
+            while ((match = varRegex.exec(functionBody)) !== null) {
+                variables.push(match[1]);
+            }
+            
+            if (variables.length === 0) {
+                throw new Error('No variables found in function. Make sure you have let/const/var declarations.');
+            }
+            
+            // Find the for loop
+            const forLoopRegex = /for\s*\(([^)]*)\)\s*{/;
+            const loopMatch = functionBody.match(forLoopRegex);
+            
+            if (!loopMatch) {
+                throw new Error('No for loop found in function.');
+            }
+            
+            const loopStart = functionBody.indexOf(loopMatch[0]);
+            const beforeLoop = functionBody.substring(0, loopStart);
+            
+            // Find the loop body and end
+            let braceCount = 0;
+            let loopEnd = loopStart + loopMatch[0].length;
+            let inLoop = false;
+            
+            for (let i = loopStart; i < functionBody.length; i++) {
+                if (functionBody[i] === '{') {
+                    braceCount++;
+                    inLoop = true;
+                }
+                if (functionBody[i] === '}') {
+                    braceCount--;
+                    if (braceCount === 0 && inLoop) {
+                        loopEnd = i;
+                        break;
+                    }
+                }
+            }
+            
+            const loopHeader = loopMatch[0];
+            const loopBody = functionBody.substring(loopStart + loopMatch[0].length, loopEnd);
+            const afterLoop = functionBody.substring(loopEnd + 1);
+            
+            // Build the variable capture string
+            const varString = variables.join(', ');
+            const captureCall = `window.capture(s, {${varString}});`;
+            
+            // Construct instrumented code
+            const instrumentedBody = `
+                ${beforeLoop}
+                ${captureCall} // Initial state
+                
+                ${loopHeader}
+                    ${loopBody}
+                    ${captureCall} // Capture after each iteration
+                }
+                
+                ${afterLoop}
+            `;
+            
+            // Return wrapped executable code
+            return `
+                (function() {
+                    const testData = ${JSON.stringify(testInput)};
+                    const func = function(s) {
+                        ${instrumentedBody}
+                    };
+                    const result = func(testData);
+                    console.log('Function result:', result);
+                })();
+            `;
+        }
+
+        function displayState(stepIndex) {
+            if (stepIndex < 0 || stepIndex >= states.length) return;
+            
+            currentStep = stepIndex;
+            const state = states[stepIndex];
+            
+            const visualArea = document.getElementById('visualizationArea');
+            
+            // Step info
+            let html = `
+                <div class="step-info">
+                    <div class="step-counter">Step ${stepIndex + 1} of ${states.length}</div>
+                    <div class="controls">
+                        <button class="btn-secondary" onclick="displayState(0)" ${stepIndex === 0 ? 'disabled' : ''}>⏮️ First</button>
+                        <button class="btn-secondary" onclick="displayState(${stepIndex - 1})" ${stepIndex === 0 ? 'disabled' : ''}>◀️ Previous</button>
+                        <button class="btn-success" onclick="displayState(${stepIndex + 1})" ${stepIndex === states.length - 1 ? 'disabled' : ''}>Next ▶️</button>
+                        <button class="btn-secondary" onclick="displayState(${states.length - 1})" ${stepIndex === states.length - 1 ? 'disabled' : ''}>⏭️ Last</button>
+                    </div>
+                </div>
+            `;
+            
+            // Array/String visualization
+            html += '<div class="array-container">';
+            const s = state.s;
+            const start = state.variables.start !== undefined ? state.variables.start : -1;
+            const end = state.variables.end !== undefined ? state.variables.end : -1;
+            
+            for (let i = 0; i < s.length; i++) {
+                let className = 'array-value';
+                let pointerLabel = '';
+                
+                if (i === start && i === end) {
+                    className += ' both';
+                    pointerLabel = '<div class="pointer-label both">START & END</div>';
+                } else if (i === start) {
+                    className += ' start';
+                    pointerLabel = '<div class="pointer-label start">START</div>';
+                } else if (i === end) {
+                    className += ' end';
+                    pointerLabel = '<div class="pointer-label end">END</div>';
+                } else if (start >= 0 && end >= 0 && i > start && i < end) {
+                    className += ' in-window';
+                }
+                
+                html += `
+                    <div class="array-item">
+                        ${pointerLabel}
+                        <div class="array-index">[${i}]</div>
+                        <div class="${className}">${escapeHtml(s[i])}</div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            
+            // Variables visualization
+            html += '<div class="variables-grid">';
+            for (const [varName, varValue] of Object.entries(state.variables)) {
+                let displayValue;
+                if (typeof varValue === 'object') {
+                    displayValue = JSON.stringify(varValue, null, 2);
+                } else {
+                    displayValue = String(varValue);
+                }
+                
+                html += `
+                    <div class="variable-card">
+                        <div class="variable-name">${varName}</div>
+                        <div class="variable-value">${escapeHtml(displayValue)}</div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            
+            visualArea.innerHTML = html;
+        }
+
+        function resetVisualization() {
+            states = [];
+            currentStep = 0;
+            document.getElementById('visualizationArea').innerHTML = 
+                '<p style="color: #999; text-align: center; padding: 40px;">Run your code to see the visualization</p>';
+            document.getElementById('message').innerHTML = '';
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            const className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.innerHTML = `<div class="${className}">${escapeHtml(message)}</div>`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (states.length === 0) return;
+            
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (currentStep > 0) displayState(currentStep - 1);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (currentStep < states.length - 1) displayState(currentStep + 1);
+            }
+        });
+    </script>
+</body>
+</html>
