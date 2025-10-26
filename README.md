@@ -21,6 +21,7 @@
 - [X] [Add Binary](./problems/Strings/AddBinary.md)
 
 ### Objects
+- [X] [Longest Substring Without Repeating Characters](./problems/Objects/LongestSubstringWithoutRepeatingCharacters.md)
 
 ### Other Topics
 - [Stack and Heap, Shallow Copy](./otherTopics/ShallowCopy.md)
