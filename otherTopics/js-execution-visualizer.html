@@ -415,6 +415,99 @@
             height: 20px;
             border-radius: 4px;
         }
+        
+        .scope-chain-area {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border: 3px solid #9c27b0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .scope-chain-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .scope-chain-header h3 {
+            color: #7b1fa2;
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+        
+        .scope-chain-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .scope-box {
+            background: white;
+            border: 3px solid #9c27b0;
+            border-radius: 12px;
+            padding: 15px 20px;
+            min-width: 180px;
+            box-shadow: 0 4px 8px rgba(156, 39, 176, 0.2);
+            position: relative;
+        }
+        
+        .scope-box.active {
+            background: #ce93d8;
+            border-color: #7b1fa2;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+        }
+        
+        .scope-box.accessible {
+            border-style: dashed;
+            opacity: 0.8;
+        }
+        
+        .scope-box.closed {
+            background: #f3e5f5;
+            border-style: dashed;
+            opacity: 0.7;
+        }
+        
+        .scope-title {
+            font-weight: bold;
+            color: #7b1fa2;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .scope-vars {
+            font-size: 0.9em;
+            color: #4a148c;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+        }
+        
+        .scope-arrow {
+            font-size: 2em;
+            color: #9c27b0;
+            font-weight: bold;
+        }
+        
+        .closure-indicator {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff6f00;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            box-shadow: 0 2px 8px rgba(255, 111, 0, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -424,6 +517,7 @@
         <div class="mode-selector">
             <button class="mode-btn active" onclick="switchMode('sync')">Synchronous Code</button>
             <button class="mode-btn" onclick="switchMode('async')">Asynchronous Code</button>
+            <button class="mode-btn" onclick="switchMode('closure')">Closures</button>
         </div>
         
         <div class="agent-container">
@@ -467,6 +561,17 @@
                     </div>
                 </div>
                 <div class="loop-description" id="loop-description">Event loop is waiting...</div>
+            </div>
+            
+            <div class="scope-chain-area" id="scope-chain-area" style="display: none;">
+                <div class="scope-chain-header">
+                    <h3>🔗 Scope Chain (How Closures Capture Variables)</h3>
+                    <p class="platform-note">Functions remember their outer scope even after the outer function returns</p>
+                </div>
+                <div class="scope-chain-content" id="scope-chain-content">
+                    <!-- Scope boxes will be rendered here -->
+                </div>
+                <div class="loop-description" id="scope-description">Scope chain visualization</div>
             </div>
             
             <div class="platform-area" id="platform-area" style="display: none;">
@@ -534,6 +639,245 @@
     </div>
 
     <script>
+        const closureScenario = {
+            description: 'Closures - Functions remember their outer scope, even after outer function returns',
+            code: [
+                'function outer() {',
+                '  let count = 0;',
+                '  const name = "Counter";',
+                '  ',
+                '  return function inner() {',
+                '    count++;',
+                '    console.log(name, count);',
+                '  };',
+                '}',
+                '',
+                'const counter = outer();',
+                'counter(); // Counter 1',
+                'counter(); // Counter 2'
+            ],
+            steps: [
+                {
+                    line: 10,
+                    stack: [{name: 'Global', vars: 'outer: function'}],
+                    heap: [{name: 'Function: outer', details: 'code definition'}],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function'], active: true, accessible: false, closed: false}
+                    ],
+                    scopeDescription: 'Global scope created with outer function',
+                    status: 'Global context - outer function declared'
+                },
+                {
+                    line: 10,
+                    stack: [
+                        {name: 'Global', vars: 'outer: function, counter: undefined'},
+                        {name: 'outer()', vars: 'executing'}
+                    ],
+                    heap: [{name: 'Function: outer', details: 'code definition'}],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function'], active: false, accessible: true, closed: false},
+                        {name: 'outer() Scope', vars: ['count: undefined', 'name: undefined'], active: true, accessible: false, closed: false}
+                    ],
+                    scopeDescription: 'Calling outer() - new scope created on stack',
+                    status: 'outer() called - new execution context pushed'
+                },
+                {
+                    line: 1,
+                    stack: [
+                        {name: 'Global', vars: 'outer, counter: undefined'},
+                        {name: 'outer()', vars: 'count: 0, name: "Counter"'}
+                    ],
+                    heap: [{name: 'Function: outer', details: 'code definition'}],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function'], active: false, accessible: true, closed: false},
+                        {name: 'outer() Scope', vars: ['count: 0', 'name: "Counter"'], active: true, accessible: false, closed: false}
+                    ],
+                    scopeDescription: 'Variables count and name initialized in outer() scope',
+                    status: 'Variables count=0 and name="Counter" created'
+                },
+                {
+                    line: 4,
+                    stack: [
+                        {name: 'Global', vars: 'outer, counter: undefined'},
+                        {name: 'outer()', vars: 'count: 0, name: "Counter", inner: function'}
+                    ],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner', details: 'code + [[Environment]] → outer scope'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function'], active: false, accessible: true, closed: false},
+                        {name: 'outer() Scope', vars: ['count: 0', 'name: "Counter"'], active: true, accessible: false, closed: false, hasClosure: true}
+                    ],
+                    scopeDescription: '🔥 inner function created - captures reference to outer() scope!',
+                    status: 'inner function declared - CLOSURE FORMED! 🔥'
+                },
+                {
+                    line: 10,
+                    stack: [{name: 'Global', vars: 'outer, counter: function'}],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner (counter)', details: '[[Environment]] → outer scope (count=0, name="Counter")'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function', 'counter: function'], active: true, accessible: false, closed: false},
+                        {name: 'outer() Scope (CLOSED)', vars: ['count: 0', 'name: "Counter"'], active: false, accessible: true, closed: true, hasClosure: true}
+                    ],
+                    scopeDescription: '💡 outer() returned and popped from stack, but scope SURVIVES via closure!',
+                    status: 'outer() returned - stack frame gone, but scope kept alive! 💡'
+                },
+                {
+                    line: 11,
+                    stack: [
+                        {name: 'Global', vars: 'outer, counter: function'},
+                        {name: 'counter() [inner]', vars: 'executing'}
+                    ],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner (counter)', details: '[[Environment]] → outer scope'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function', 'counter: function'], active: false, accessible: true, closed: false},
+                        {name: 'outer() Scope (CLOSED)', vars: ['count: 0', 'name: "Counter"'], active: false, accessible: true, closed: true, hasClosure: true},
+                        {name: 'inner() Scope', vars: [], active: true, accessible: false, closed: false}
+                    ],
+                    scopeDescription: 'counter() executing - can access closed outer scope via closure!',
+                    status: 'First counter() call - inner() can access outer scope!'
+                },
+                {
+                    line: 5,
+                    stack: [
+                        {name: 'Global', vars: 'outer, counter: function'},
+                        {name: 'counter() [inner]', vars: 'executing'}
+                    ],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner (counter)', details: '[[Environment]] → outer scope'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function', 'counter: function'], active: false, accessible: true, closed: false},
+                        {name: 'outer() Scope (CLOSED)', vars: ['count: 1 ⬆️', 'name: "Counter"'], active: false, accessible: true, closed: true, hasClosure: true},
+                        {name: 'inner() Scope', vars: [], active: true, accessible: false, closed: false}
+                    ],
+                    scopeDescription: 'Modifying count in closed scope! Closure allows this',
+                    status: 'count++ executed - modifying variable in closed scope!'
+                },
+                {
+                    line: 6,
+                    stack: [
+                        {name: 'Global', vars: 'outer, counter: function'},
+                        {name: 'counter() [inner]', vars: 'executing'}
+                    ],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner (counter)', details: '[[Environment]] → outer scope'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function', 'counter: function'], active: false, accessible: true, closed: false},
+                        {name: 'outer() Scope (CLOSED)', vars: ['count: 1', 'name: "Counter"'], active: false, accessible: true, closed: true, hasClosure: true},
+                        {name: 'inner() Scope', vars: [], active: true, accessible: false, closed: false}
+                    ],
+                    scopeDescription: 'Reading name and count from closed scope',
+                    status: 'Console: "Counter 1" - read from closed scope'
+                },
+                {
+                    line: 11,
+                    stack: [{name: 'Global', vars: 'outer, counter: function'}],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner (counter)', details: '[[Environment]] → outer scope'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function', 'counter: function'], active: true, accessible: false, closed: false},
+                        {name: 'outer() Scope (CLOSED)', vars: ['count: 1', 'name: "Counter"'], active: false, accessible: true, closed: true, hasClosure: true}
+                    ],
+                    scopeDescription: 'First call complete - closed scope persists with updated count=1',
+                    status: 'First call done - closed scope still alive!'
+                },
+                {
+                    line: 12,
+                    stack: [
+                        {name: 'Global', vars: 'outer, counter: function'},
+                        {name: 'counter() [inner]', vars: 'executing'}
+                    ],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner (counter)', details: '[[Environment]] → outer scope'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function', 'counter: function'], active: false, accessible: true, closed: false},
+                        {name: 'outer() Scope (CLOSED)', vars: ['count: 1', 'name: "Counter"'], active: false, accessible: true, closed: true, hasClosure: true},
+                        {name: 'inner() Scope', vars: [], active: true, accessible: false, closed: false}
+                    ],
+                    scopeDescription: 'Second counter() call - accessing same closed scope',
+                    status: 'Second counter() call - same closure!'
+                },
+                {
+                    line: 5,
+                    stack: [
+                        {name: 'Global', vars: 'outer, counter: function'},
+                        {name: 'counter() [inner]', vars: 'executing'}
+                    ],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner (counter)', details: '[[Environment]] → outer scope'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function', 'counter: function'], active: false, accessible: true, closed: false},
+                        {name: 'outer() Scope (CLOSED)', vars: ['count: 2 ⬆️', 'name: "Counter"'], active: false, accessible: true, closed: true, hasClosure: true},
+                        {name: 'inner() Scope', vars: [], active: true, accessible: false, closed: false}
+                    ],
+                    scopeDescription: 'count++ again - same variable persisted across calls!',
+                    status: 'count++ again - from 1 to 2!'
+                },
+                {
+                    line: 6,
+                    stack: [
+                        {name: 'Global', vars: 'outer, counter: function'},
+                        {name: 'counter() [inner]', vars: 'executing'}
+                    ],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner (counter)', details: '[[Environment]] → outer scope'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function', 'counter: function'], active: false, accessible: true, closed: false},
+                        {name: 'outer() Scope (CLOSED)', vars: ['count: 2', 'name: "Counter"'], active: false, accessible: true, closed: true, hasClosure: true},
+                        {name: 'inner() Scope', vars: [], active: true, accessible: false, closed: false}
+                    ],
+                    scopeDescription: 'Reading persisted variables from closed scope',
+                    status: 'Console: "Counter 2" - state persisted!'
+                },
+                {
+                    line: -1,
+                    stack: [{name: 'Global', vars: 'outer, counter: function'}],
+                    heap: [
+                        {name: 'Function: outer', details: 'code definition'},
+                        {name: 'Function: inner (counter)', details: '[[Environment]] → outer scope'}
+                    ],
+                    queue: [],
+                    scopeChain: [
+                        {name: 'Global Scope', vars: ['outer: function', 'counter: function'], active: true, accessible: false, closed: false},
+                        {name: 'outer() Scope (CLOSED)', vars: ['count: 2', 'name: "Counter"'], active: false, accessible: true, closed: true, hasClosure: true}
+                    ],
+                    scopeDescription: '✅ Closure complete! outer() scope lives on, accessible only via counter()',
+                    status: 'Done! Closure keeps outer scope alive even after outer() returned'
+                }
+            ]
+        };
+
         let currentMode = 'sync';
         let currentStep = 0;
         let isRunning = false;
@@ -852,14 +1196,20 @@
         }
 
         function render() {
-            const scenario = currentMode === 'sync' ? syncScenario : asyncScenario;
+            const scenario = currentMode === 'sync' ? syncScenario : 
+                           currentMode === 'async' ? asyncScenario : closureScenario;
             const step = scenario.steps[currentStep];
             
             document.getElementById('mode-description').textContent = scenario.description;
             
-            // Show/hide event loop and platform areas based on mode
+            // Show/hide areas based on mode
             const eventLoopArea = document.getElementById('event-loop-area');
             const platformArea = document.getElementById('platform-area');
+            const scopeChainArea = document.getElementById('scope-chain-area');
+            
+            eventLoopArea.style.display = 'none';
+            platformArea.style.display = 'none';
+            scopeChainArea.style.display = 'none';
             
             if (currentMode === 'async') {
                 // Render event loop
@@ -922,9 +1272,28 @@
                         </div>`
                     ).join('');
                 }
-            } else {
-                eventLoopArea.style.display = 'none';
-                platformArea.style.display = 'none';
+            } else if (currentMode === 'closure') {
+                // Render scope chain
+                scopeChainArea.style.display = 'block';
+                const scopeChainContent = document.getElementById('scope-chain-content');
+                
+                scopeChainContent.innerHTML = step.scopeChain.map((scope, idx) => {
+                    const classes = ['scope-box'];
+                    if (scope.active) classes.push('active');
+                    if (scope.accessible) classes.push('accessible');
+                    if (scope.closed) classes.push('closed');
+                    
+                    return `
+                        <div class="${classes.join(' ')}">
+                            ${scope.hasClosure ? '<div class="closure-indicator">🔒</div>' : ''}
+                            <div class="scope-title">${scope.name}</div>
+                            <div class="scope-vars">${scope.vars.join('<br>')}</div>
+                        </div>
+                        ${idx < step.scopeChain.length - 1 ? '<span class="scope-arrow">→</span>' : ''}
+                    `;
+                }).join('');
+                
+                document.getElementById('scope-description').textContent = step.scopeDescription;
             }
             
             // Render code
