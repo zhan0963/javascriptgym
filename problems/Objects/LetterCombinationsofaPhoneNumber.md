@@ -4,7 +4,7 @@ Given a string containing digits from 2-9 inclusive, return all possible letter 
   
 A mapping of digits to letters (just like on the telephone buttons) is given below. Note that 1 does not map to any letters.  
 
-<img src="./img/LetterCombinationsofaPhoneNumber.png" width=100 height=100 />
+<img src="./img/LetterCombinationsofaPhoneNumber.png" width=300 height=300 />
 <!-- ![LetterCombinationsofaPhoneNumber.png](./img/LetterCombinationsofaPhoneNumber.png) -->
 
 Example 1:
