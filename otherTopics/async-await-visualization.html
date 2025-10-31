@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Async/Await Visualizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2em;
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 1em;
+    }
+    
+    .code-section {
+      background: #282c34;
+      color: #abb2bf;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    
+    .code-section .keyword { color: #c678dd; }
+    .code-section .function { color: #61afef; }
+    .code-section .string { color: #98c379; }
+    .code-section .number { color: #d19a66; }
+    .code-section .comment { color: #5c6370; font-style: italic; }
+    .code-section .highlight { background: #3e4451; border-radius: 3px; padding: 2px 4px; }
+    
+    .controls {
+      text-align: center;
+      margin-bottom: 30px;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    button {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-weight: 600;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .step-info {
+      background: #fff0f5;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #f093fb;
+      font-size: 15px;
+      min-height: 60px;
+    }
+    
+    .visualization {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .queue-container {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      border: 2px solid #dee2e6;
+    }
+    
+    .queue-container h3 {
+      color: #495057;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+      text-align: center;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #dee2e6;
+    }
+    
+    .stack {
+      border-color: #e74c3c;
+    }
+    
+    .stack h3 {
+      color: #e74c3c;
+      border-color: #e74c3c;
+    }
+    
+    .microtask {
+      border-color: #3498db;
+    }
+    
+    .microtask h3 {
+      color: #3498db;
+      border-color: #3498db;
+    }
+    
+    .variables {
+      border-color: #2ecc71;
+    }
+    
+    .variables h3 {
+      color: #2ecc71;
+      border-color: #2ecc71;
+    }
+    
+    .queue-items {
+      min-height: 250px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .stack-items {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 10px;
+      min-height: 250px;
+    }
+    
+    .item {
+      background: white;
+      padding: 12px 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-size: 14px;
+      transition: all 0.3s ease;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .stack .item {
+      background: #ffe5e5;
+      border-left: 4px solid #e74c3c;
+    }
+    
+    .microtask .item {
+      background: #e3f2fd;
+      border-left: 4px solid #3498db;
+    }
+    
+    .variables .item {
+      background: #e8f5e9;
+      border-left: 4px solid #2ecc71;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .var-name {
+      font-weight: 600;
+      color: #2ecc71;
+    }
+    
+    .var-value {
+      color: #666;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .console-output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .console-output .log {
+      color: #4ec9b0;
+    }
+    
+    .empty-queue {
+      color: #999;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .key-insight {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      text-align: center;
+      font-size: 1.1em;
+      font-weight: 500;
+    }
+
+
+
+    @media (max-width: 1024px) {
+      .visualization {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚡ JavaScript Async/Await Visualizer</h1>
+    <p class="subtitle">Understanding how async/await works under the hood with the Event Loop</p>
+    
+    <div class="code-section">
+<span class="function">console</span>.<span class="function">log</span>(<span class="string">'1: Start'</span>);
+
+<span class="keyword">async function</span> <span class="function">fetchData</span>() {
+  <span class="function">console</span>.<span class="function">log</span>(<span class="string">'2: Inside async function'</span>);
+  
+  <span class="comment">// await pauses the function here!</span>
+  <span class="keyword">const</span> result = <span class="keyword">await</span> Promise.<span class="function">resolve</span>(<span class="number">42</span>);
+  
+  <span class="comment">// This code runs AFTER await (as a microtask)</span>
+  <span class="function">console</span>.<span class="function">log</span>(<span class="string">'5: After await'</span>, result);
+  
+  <span class="keyword">const</span> doubled = result * <span class="number">2</span>;
+  <span class="function">console</span>.<span class="function">log</span>(<span class="string">'6: Doubled value'</span>, doubled);
+  
+  <span class="keyword">return</span> doubled;
+}
+
+<span class="function">fetchData</span>();
+
+<span class="function">console</span>.<span class="function">log</span>(<span class="string">'3: After function call'</span>);
+
+Promise.<span class="function">resolve</span>(<span class="string">'Direct Promise'</span>).<span class="function">then</span>(msg => {
+  <span class="function">console</span>.<span class="function">log</span>(<span class="string">'4: Promise.then'</span>, msg);
+});
+    </div>
+    
+    <div class="controls">
+      <button id="prevBtn" disabled>⏮ Previous</button>
+      <button id="nextBtn">Next Step ⏭</button>
+      <button id="resetBtn">🔄 Reset</button>
+      <button id="autoBtn">▶️ Auto Play</button>
+    </div>
+    
+    <div class="step-info" id="stepInfo">
+      Click "Next Step" to begin execution
+    </div>
+    
+    <div class="visualization">
+      <div class="queue-container stack">
+        <h3>📚 Call Stack</h3>
+        <div class="queue-items stack-items" id="callStack">
+          <div class="empty-queue">Empty</div>
+        </div>
+      </div>
+      
+      <div class="queue-container microtask">
+        <h3>⚡ Microtask Queue</h3>
+        <div class="queue-items" id="microtaskQueue">
+          <div class="empty-queue">Empty</div>
+        </div>
+      </div>
+      
+      <div class="queue-container variables">
+        <h3>📦 Variables & State</h3>
+        <div class="queue-items" id="variables">
+          <div class="empty-queue">No variables yet</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="queue-container">
+      <h3>🖥️ Console Output</h3>
+      <div class="console-output" id="consoleOutput">
+        <div class="empty-queue">No output yet</div>
+      </div>
+    </div>
+
+    <div class="key-insight">
+      💡 Key Insight: <strong>await</strong> does NOT pause the function "in the stack" - it causes the function to <strong>RETURN immediately</strong> and be <strong>REMOVED from the stack</strong>. 
+      The code after <strong>await</strong> is scheduled as a microtask. This is NON-BLOCKING!
+    </div>
+  </div>
+
+  <script>
+    const steps = [
+      {
+        description: "Program starts. Script execution begins in the main execution context.",
+        stack: ["<Global>"],
+        microtask: [],
+        variables: [],
+        console: []
+      },
+      {
+        description: "Execute: console.log('1: Start') - First synchronous statement.",
+        stack: ["<Global>", "console.log('1: Start')"],
+        microtask: [],
+        variables: [],
+        console: ["1: Start"]
+      },
+      {
+        description: "Console.log completes. Now calling fetchData() - an async function.",
+        stack: ["<Global>"],
+        microtask: [],
+        variables: [],
+        console: ["1: Start"]
+      },
+      {
+        description: "fetchData() is called. Async functions return a Promise immediately, but their body starts executing SYNCHRONOUSLY.",
+        stack: ["<Global>", "fetchData()"],
+        microtask: [],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" }
+        ],
+        console: ["1: Start"]
+      },
+      {
+        description: "Inside fetchData: console.log('2: Inside async function') executes synchronously.",
+        stack: ["<Global>", "fetchData()", "console.log('2: ...')"],
+        microtask: [],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" }
+        ],
+        console: ["1: Start", "2: Inside async function"]
+      },
+      {
+        description: "Console.log completes. Now we hit 'await Promise.resolve(42)'.",
+        stack: ["<Global>", "fetchData()"],
+        microtask: [],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" }
+        ],
+        console: ["1: Start", "2: Inside async function"]
+      },
+      {
+        description: "🔑 CRITICAL: 'await' causes fetchData() to IMMEDIATELY RETURN and be REMOVED from stack! The rest of fetchData() is scheduled as a microtask. This is NON-BLOCKING - the stack is now free!",
+        stack: ["<Global>"],
+        microtask: ["fetchData() continuation"],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" },
+          { name: "await", value: "Promise.resolve(42)" }
+        ],
+        console: ["1: Start", "2: Inside async function"]
+      },
+      {
+        description: "Execute: console.log('3: After function call') - This runs BEFORE the awaited code!",
+        stack: ["<Global>", "console.log('3: ...')"],
+        microtask: ["fetchData() continuation"],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call"]
+      },
+      {
+        description: "Console.log completes. Now creating another Promise with .then().",
+        stack: ["<Global>"],
+        microtask: ["fetchData() continuation"],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call"]
+      },
+      {
+        description: "Promise.resolve('Direct Promise').then() is called. The .then() callback is scheduled in microtask queue.",
+        stack: ["<Global>"],
+        microtask: ["fetchData() continuation", "Promise.then callback"],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" },
+          { name: "directPromise", value: "Promise<fulfilled>" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call"]
+      },
+      {
+        description: "All synchronous code complete! Call stack is empty. Event loop processes microtasks in FIFO order.",
+        stack: ["<Global>"],
+        microtask: ["fetchData() continuation", "Promise.then callback"],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call"]
+      },
+      {
+        description: "First microtask: Resume fetchData() from where it was paused. The 'result' variable gets value 42.",
+        stack: ["<Global>", "fetchData() resumed"],
+        microtask: ["Promise.then callback"],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" },
+          { name: "result", value: "42" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call"]
+      },
+      {
+        description: "Inside resumed fetchData: console.log('5: After await', 42) executes.",
+        stack: ["<Global>", "fetchData() resumed", "console.log('5: ...')"],
+        microtask: ["Promise.then callback"],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" },
+          { name: "result", value: "42" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call", "5: After await 42"]
+      },
+      {
+        description: "Console.log completes. Calculate doubled = result * 2 = 84.",
+        stack: ["<Global>", "fetchData() resumed"],
+        microtask: ["Promise.then callback"],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" },
+          { name: "result", value: "42" },
+          { name: "doubled", value: "84" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call", "5: After await 42"]
+      },
+      {
+        description: "Execute: console.log('6: Doubled value', 84).",
+        stack: ["<Global>", "fetchData() resumed", "console.log('6: ...')"],
+        microtask: ["Promise.then callback"],
+        variables: [
+          { name: "fetchData()", value: "Promise<pending>" },
+          { name: "result", value: "42" },
+          { name: "doubled", value: "84" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call", "5: After await 42", "6: Doubled value 84"]
+      },
+      {
+        description: "fetchData() returns 84. The async function completes and its Promise resolves with value 84.",
+        stack: ["<Global>", "fetchData() resumed"],
+        microtask: ["Promise.then callback"],
+        variables: [
+          { name: "fetchData()", value: "Promise<fulfilled: 84>" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call", "5: After await 42", "6: Doubled value 84"]
+      },
+      {
+        description: "fetchData() completes and is removed from stack. Event loop picks next microtask.",
+        stack: ["<Global>"],
+        microtask: ["Promise.then callback"],
+        variables: [
+          { name: "fetchData()", value: "Promise<fulfilled: 84>" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call", "5: After await 42", "6: Doubled value 84"]
+      },
+      {
+        description: "Second microtask: Execute the Promise.then callback with 'Direct Promise'.",
+        stack: ["<Global>", "Promise.then callback"],
+        microtask: [],
+        variables: [
+          { name: "fetchData()", value: "Promise<fulfilled: 84>" },
+          { name: "msg", value: "'Direct Promise'" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call", "5: After await 42", "6: Doubled value 84"]
+      },
+      {
+        description: "Inside .then callback: console.log('4: Promise.then', 'Direct Promise') executes.",
+        stack: ["<Global>", "Promise.then callback", "console.log('4: ...')"],
+        microtask: [],
+        variables: [
+          { name: "fetchData()", value: "Promise<fulfilled: 84>" },
+          { name: "msg", value: "'Direct Promise'" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call", "5: After await 42", "6: Doubled value 84", "4: Promise.then Direct Promise"]
+      },
+      {
+        description: "Promise.then callback completes. No more microtasks. Execution complete! ✅",
+        stack: ["<Global>"],
+        microtask: [],
+        variables: [
+          { name: "fetchData()", value: "Promise<fulfilled: 84>" }
+        ],
+        console: ["1: Start", "2: Inside async function", "3: After function call", "5: After await 42", "6: Doubled value 84", "4: Promise.then Direct Promise"]
+      },
+      {
+        description: "🎯 Notice the execution order: 1→2→3→5→6→4. The 'await' paused the function, letting other code run! Both fetchData() continuation and Promise.then are microtasks that run in queue order.",
+        stack: [],
+        microtask: [],
+        variables: [],
+        console: ["1: Start", "2: Inside async function", "3: After function call", "5: After await 42", "6: Doubled value 84", "4: Promise.then Direct Promise"]
+      }
+    ];
+
+    let currentStep = 0;
+    let autoPlayInterval = null;
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const autoBtn = document.getElementById('autoBtn');
+    const stepInfo = document.getElementById('stepInfo');
+    const callStack = document.getElementById('callStack');
+    const microtaskQueue = document.getElementById('microtaskQueue');
+    const variables = document.getElementById('variables');
+    const consoleOutput = document.getElementById('consoleOutput');
+
+    function render() {
+      const step = steps[currentStep];
+      
+      stepInfo.textContent = `Step ${currentStep + 1}/${steps.length}: ${step.description}`;
+      
+      // Render Call Stack
+      if (step.stack.length === 0) {
+        callStack.innerHTML = '<div class="empty-queue">Empty</div>';
+      } else {
+        callStack.innerHTML = step.stack.map(item => `<div class="item">${item}</div>`).join('');
+      }
+      
+      // Render Microtask Queue
+      if (step.microtask.length === 0) {
+        microtaskQueue.innerHTML = '<div class="empty-queue">Empty</div>';
+      } else {
+        microtaskQueue.innerHTML = step.microtask.map(item => `<div class="item">${item}</div>`).join('');
+      }
+      
+      // Render Variables
+      if (step.variables.length === 0) {
+        variables.innerHTML = '<div class="empty-queue">No variables</div>';
+      } else {
+        variables.innerHTML = step.variables.map(v => 
+          `<div class="item"><span class="var-name">${v.name}</span><span class="var-value">${v.value}</span></div>`
+        ).join('');
+      }
+      
+      // Render Console
+      if (step.console.length === 0) {
+        consoleOutput.innerHTML = '<div class="empty-queue">No output yet</div>';
+      } else {
+        consoleOutput.innerHTML = step.console.map(line => `<div class="log">> ${line}</div>`).join('');
+      }
+      
+      // Update buttons
+      prevBtn.disabled = currentStep === 0;
+      nextBtn.disabled = currentStep === steps.length - 1;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentStep > 0) {
+        currentStep--;
+        render();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        render();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      currentStep = 0;
+      stopAutoPlay();
+      render();
+    });
+
+    autoBtn.addEventListener('click', () => {
+      if (autoPlayInterval) {
+        stopAutoPlay();
+      } else {
+        startAutoPlay();
+      }
+    });
+
+    function startAutoPlay() {
+      autoBtn.textContent = '⏸️ Pause';
+      autoPlayInterval = setInterval(() => {
+        if (currentStep < steps.length - 1) {
+          currentStep++;
+          render();
+        } else {
+          stopAutoPlay();
+        }
+      }, 2500);
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = null;
+        autoBtn.textContent = '▶️ Auto Play';
+      }
+    }
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
