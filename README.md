@@ -13,6 +13,7 @@
 - [X] [Merge Sorted Array](./problems/arrays/MergeSortedArray.md)
 - [X] [Convert Sorted Array to Binary Search Tree](./problems/arrays/ConvertSortedArraytoBinarySearchTree.md)
 - [X] [Pascal's Triangle](./problems/arrays/PascalsTriangle.md)
+- [X] [Median of Two Sorted Arrays](./problems/arrays/MedianofTwoSortedArrays.md)
 
 ### Strings
 - [X] [Roman to Integer](./problems/Strings/RomantoInteger.md)
