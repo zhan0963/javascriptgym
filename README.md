@@ -31,3 +31,4 @@
 - [Stack and Heap, Shallow Copy](./otherTopics/ShallowCopy.md)
 - [Sorting Visualizer](./otherTopics/sorting-visualizer.html)
 - [JS Execution Visualizer](./otherTopics/js-execution-visualizer.html)
+- [Async Await Visualizer](./otherTopics/async-await-visualization.html)
