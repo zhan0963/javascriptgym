@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container With Most Water - Algorithm Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .visualization {
+            position: relative;
+            height: 400px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+        }
+        
+        .bar-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            flex: 1;
+            margin: 0 2px;
+        }
+        
+        .bar {
+            width: 100%;
+            background: #94a3b8;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .bar.left-pointer {
+            background: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        .bar.right-pointer {
+            background: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+        
+        .bar-label {
+            position: absolute;
+            top: -25px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .pointer-label {
+            margin-top: 5px;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: white;
+        }
+        
+        .pointer-label.left {
+            background: #3b82f6;
+        }
+        
+        .pointer-label.right {
+            background: #ef4444;
+        }
+        
+        .water-area {
+            position: absolute;
+            bottom: 20px;
+            background: rgba(56, 189, 248, 0.3);
+            border: 2px dashed #0ea5e9;
+            border-radius: 5px;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        
+        .info-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-card {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-card h3 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        
+        .info-card.max-area {
+            border-left-color: #10b981;
+        }
+        
+        .info-card.max-area .value {
+            color: #10b981;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-step {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-step:hover {
+            background: #2563eb;
+        }
+        
+        .btn-reset {
+            background: #64748b;
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            background: #475569;
+        }
+        
+        .btn-auto {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-auto:hover {
+            background: #059669;
+        }
+        
+        .btn-auto.running {
+            background: #ef4444;
+        }
+        
+        .btn-auto.running:hover {
+            background: #dc2626;
+        }
+        
+        .explanation {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #78350f;
+        }
+        
+        .explanation strong {
+            color: #92400e;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        button:disabled:hover {
+            transform: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌊 Container With Most Water - Two Pointer Algorithm</h1>
+        
+        <div class="info-panel">
+            <div class="info-card">
+                <h3>Current Step</h3>
+                <div class="value" id="stepNumber">0</div>
+            </div>
+            <div class="info-card">
+                <h3>Current Area</h3>
+                <div class="value" id="currentArea">0</div>
+            </div>
+            <div class="info-card max-area">
+                <h3>Max Area Found</h3>
+                <div class="value" id="maxArea">0</div>
+            </div>
+            <div class="info-card">
+                <h3>Left (Blue)</h3>
+                <div class="value" id="leftInfo">-</div>
+            </div>
+            <div class="info-card">
+                <h3>Right (Red)</h3>
+                <div class="value" id="rightInfo">-</div>
+            </div>
+        </div>
+        
+        <div class="visualization" id="visualization">
+            <div class="water-area" id="waterArea"></div>
+        </div>
+        
+        <div class="explanation" id="explanation">
+            Click "Start" to begin the visualization, or "Next Step" to go through it step by step!
+        </div>
+        
+        <div class="controls">
+            <button class="btn-step" id="stepBtn" onclick="nextStep()">Next Step</button>
+            <button class="btn-auto" id="autoBtn" onclick="toggleAuto()">Auto Play</button>
+            <button class="btn-reset" onclick="reset()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        // Sample height array
+        const heights = [1, 8, 6, 2, 5, 4, 8, 3, 7];
+        let left = 0;
+        let right = heights.length - 1;
+        let maxArea = 0;
+        let currentStep = 0;
+        let isRunning = false;
+        let autoInterval = null;
+        
+        function initializeVisualization() {
+            const viz = document.getElementById('visualization');
+            const waterArea = document.getElementById('waterArea');
+            
+            // Clear existing bars
+            const existingBars = viz.querySelectorAll('.bar-container');
+            existingBars.forEach(bar => bar.remove());
+            
+            // Create bars
+            const maxHeight = Math.max(...heights);
+            heights.forEach((height, index) => {
+                const barContainer = document.createElement('div');
+                barContainer.className = 'bar-container';
+                
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = `${(height / maxHeight) * 300}px`;
+                bar.id = `bar-${index}`;
+                
+                const label = document.createElement('div');
+                label.className = 'bar-label';
+                label.textContent = height;
+                
+                const pointerLabel = document.createElement('div');
+                pointerLabel.className = 'pointer-label';
+                pointerLabel.style.display = 'none';
+                pointerLabel.id = `pointer-${index}`;
+                
+                bar.appendChild(label);
+                barContainer.appendChild(bar);
+                barContainer.appendChild(pointerLabel);
+                viz.insertBefore(barContainer, waterArea);
+            });
+            
+            updateVisualization();
+        }
+        
+        function updateVisualization() {
+            // Update bar colors
+            heights.forEach((_, index) => {
+                const bar = document.getElementById(`bar-${index}`);
+                const pointer = document.getElementById(`pointer-${index}`);
+                
+                bar.className = 'bar';
+                pointer.style.display = 'none';
+                
+                if (index === left) {
+                    bar.classList.add('left-pointer');
+                    pointer.style.display = 'block';
+                    pointer.className = 'pointer-label left';
+                    pointer.textContent = 'LEFT';
+                } else if (index === right) {
+                    bar.classList.add('right-pointer');
+                    pointer.style.display = 'block';
+                    pointer.className = 'pointer-label right';
+                    pointer.textContent = 'RIGHT';
+                }
+            });
+            
+            // Calculate current area
+            const width = right - left;
+            const minHeight = Math.min(heights[left], heights[right]);
+            const currentArea = width * minHeight;
+            
+            if (currentArea > maxArea) {
+                maxArea = currentArea;
+            }
+            
+            // Update water area visualization
+            const waterArea = document.getElementById('waterArea');
+            const barWidth = document.querySelector('.bar-container').offsetWidth;
+            const leftPos = left * (barWidth + 4) + 20;
+            const areaWidth = (right - left) * (barWidth + 4);
+            const maxBarHeight = 300;
+            const maxHeightValue = Math.max(...heights);
+            const areaHeight = (minHeight / maxHeightValue) * maxBarHeight;
+            
+            waterArea.style.left = `${leftPos}px`;
+            waterArea.style.width = `${areaWidth}px`;
+            waterArea.style.height = `${areaHeight}px`;
+            
+            // Update info panel
+            document.getElementById('stepNumber').textContent = currentStep;
+            document.getElementById('currentArea').textContent = currentArea;
+            document.getElementById('maxArea').textContent = maxArea;
+            document.getElementById('leftInfo').textContent = `i=${left}, h=${heights[left]}`;
+            document.getElementById('rightInfo').textContent = `i=${right}, h=${heights[right]}`;
+            
+            // Update explanation
+            updateExplanation(currentArea, minHeight, width);
+        }
+        
+        function updateExplanation(currentArea, minHeight, width) {
+            const explanation = document.getElementById('explanation');
+            
+            if (left >= right) {
+                explanation.innerHTML = `
+                    <strong>✅ Algorithm Complete!</strong><br>
+                    The maximum area found is <strong>${maxArea}</strong>.<br>
+                    We checked all possible containers by moving the shorter pointer inward each time, 
+                    ensuring we didn't miss the optimal solution.
+                `;
+                return;
+            }
+            
+            const leftHeight = heights[left];
+            const rightHeight = heights[right];
+            const shorter = leftHeight < rightHeight ? 'left' : 'right';
+            const shorterHeight = Math.min(leftHeight, rightHeight);
+            
+            if (currentStep === 0) {
+                explanation.innerHTML = `
+                    <strong>Step ${currentStep}:</strong> Starting with maximum width (left=0, right=${heights.length - 1}).<br>
+                    Current area = min(${leftHeight}, ${rightHeight}) × ${width} = ${shorterHeight} × ${width} = <strong>${currentArea}</strong><br>
+                    The ${shorter} side (height=${shorterHeight}) limits our area.
+                `;
+            } else {
+                explanation.innerHTML = `
+                    <strong>Step ${currentStep}:</strong> Current area = min(${leftHeight}, ${rightHeight}) × ${width} = ${shorterHeight} × ${width} = <strong>${currentArea}</strong><br>
+                    Max so far: <strong>${maxArea}</strong><br>
+                    Next: Move the <strong>${shorter}</strong> pointer (height=${shorterHeight}) inward, 
+                    because moving the taller pointer can't possibly give us a larger area.
+                `;
+            }
+        }
+        
+        function nextStep() {
+            if (left >= right) {
+                return;
+            }
+            
+            // Move the pointer with smaller height
+            if (heights[left] < heights[right]) {
+                left++;
+            } else {
+                right--;
+            }
+            
+            currentStep++;
+            updateVisualization();
+            
+            if (left >= right) {
+                document.getElementById('stepBtn').disabled = true;
+                if (isRunning) {
+                    toggleAuto();
+                }
+            }
+        }
+        
+        function toggleAuto() {
+            isRunning = !isRunning;
+            const btn = document.getElementById('autoBtn');
+            const stepBtn = document.getElementById('stepBtn');
+            
+            if (isRunning) {
+                btn.textContent = 'Stop';
+                btn.classList.add('running');
+                stepBtn.disabled = true;
+                autoInterval = setInterval(() => {
+                    if (left >= right) {
+                        toggleAuto();
+                    } else {
+                        nextStep();
+                    }
+                }, 1500);
+            } else {
+                btn.textContent = 'Auto Play';
+                btn.classList.remove('running');
+                stepBtn.disabled = false;
+                clearInterval(autoInterval);
+            }
+        }
+        
+        function reset() {
+            if (isRunning) {
+                toggleAuto();
+            }
+            
+            left = 0;
+            right = heights.length - 1;
+            maxArea = 0;
+            currentStep = 0;
+            
+            document.getElementById('stepBtn').disabled = false;
+            initializeVisualization();
+        }
+        
+        // Initialize on load
+        initializeVisualization();
+    </script>
+</body>
+</html>
