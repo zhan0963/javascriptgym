@@ -22,6 +22,7 @@
 - [X] [Find the Index of the First Occurrence in a String](./problems/Strings/FindtheIndexoftheFirstOccurrenceinaString.md)
 - [X] [Length of Last Word](./problems/Strings/LengthofLastWord.md)
 - [X] [Add Binary](./problems/Strings/AddBinary.md)
+- [X] [Longest Palindromic Substring](./problems/Strings/LongestPalindromicSubstring.md)
 
 ### Objects
 - [X] [Longest Substring Without Repeating Characters](./problems/Objects/LongestSubstringWithoutRepeatingCharacters.md)
