@@ -23,6 +23,7 @@
 - [X] [Length of Last Word](./problems/Strings/LengthofLastWord.md)
 - [X] [Add Binary](./problems/Strings/AddBinary.md)
 - [X] [Longest Palindromic Substring](./problems/Strings/LongestPalindromicSubstring.md)
+- [X] [Valid Palindrome](./problems/Strings/ValidPalindrome.md)
 
 ### Objects
 - [X] [Longest Substring Without Repeating Characters](./problems/Objects/LongestSubstringWithoutRepeatingCharacters.md)
